@@ -1,0 +1,9 @@
+langgraph
+langchain
+langchain_openai
+websockets
+pycryptodome
+requests
+pyyaml
+pandas
+python-dotenv
