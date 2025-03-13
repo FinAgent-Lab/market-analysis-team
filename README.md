@@ -13,7 +13,7 @@
 ├── requirements.txt            # 필수 라이브러리 (각자 활용한 라이브러리 추가 필요)
 ├── main.py                     # 전체 워크플로우 정의
 ├── main_test.ipynb             # 주피터 노트북 활용 결과물 테스트 및 시각화
-├── common/
+├── common/dddddd
 │   └── state_graph.py          # GraphState 클래스 등 정의
 └── nodes/                      # 각 노드별 모듈 디렉토리
     ├── research_supervisor/
