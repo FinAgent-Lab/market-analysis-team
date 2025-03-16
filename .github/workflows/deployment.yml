@@ -2,7 +2,7 @@ name: Deploy to Self-Hosted Runner
 
 on:
   push:
-    branches: [ main, master, feat/**, feat/*  ]
+    branches: [ main, master ]
 #   workflow_dispatch:
 #     inputs:
 #       environment:
@@ -27,7 +27,7 @@ jobs:
         shell: pwsh
         run: |
           @"
-          APISERVER_PORT_EXTERNAL=3100
+          APISERVER_PORT_EXTERNAL=13100
           OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
           NAVER_CLIENT_ID=${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET }}
@@ -42,8 +42,10 @@ jobs:
       
       - name: Build and tag Docker images
         shell: pwsh
+        # run: |
+        #   docker-compose build --no-cache backend-ma
         run: |
-          docker-compose build --no-cache api-server
+          docker-compose build backend-ma
       
       - name: Stop running containers
         shell: pwsh
@@ -61,7 +63,7 @@ jobs:
         run: |
           # 서비스가 정상적으로 시작되었는지 확인
           Start-Sleep -Seconds 20
-          $response = Invoke-WebRequest -Uri "http://localhost:3100/api/health" -UseBasicParsing
+          $response = Invoke-WebRequest -Uri "http://localhost:13100/api/health" -UseBasicParsing
           $content = $response.Content
           if (-not ($content -match '"status":\s*"healthy"')) {
             Write-Host "서비스 상태 확인 실패"

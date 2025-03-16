@@ -2,19 +2,19 @@ version: '3.8'
 
 services:
   # OpenWebUI - 오픈소스 웹 인터페이스
-  openwebui:
+  openwebui-ma:
     image: ghcr.io/open-webui/open-webui:cuda
-    container_name: openwebui
+    container_name: openwebui-ma
     restart: unless-stopped
     ports:
       - "13000:8080"
     environment:
       # - WEBUI_AUTH=true
       # - WEBUI_DATABASE_PATH=/app/backend/data/database.sqlite
-      - OPENAI_API_BASE_URL=http://pipelines:9099
+      - OPENAI_API_BASE_URL=http://pipelines-ma:9099
       - OPENAI_API_KEY=0p3n-w3bu!
     volumes:
-      - openwebui-data:/app/backend/data
+      - openwebui-data-ma:/app/backend/data
     deploy:
       resources:
         reservations:
@@ -23,48 +23,47 @@ services:
               count: all
               capabilities: [gpu]
     depends_on:
-      - pipelines
+      - pipelines-ma
     networks:
-      - ai-network
+      - ai-network-ma
 
   # Pipelines - OpenWebUI 플러그인 프레임워크
-  pipelines:
+  pipelines-ma:
     image: ghcr.io/open-webui/pipelines:main
-    container_name: pipelines
+    container_name: pipelines-ma
     restart: unless-stopped
-    ports:
-      - "9099:9099"
+    expose:
+      - "9099"
     volumes:
       # - pipelines-data:/app/pipelines
       - ./pipelines:/app/pipelines
     environment:
-      - APISERVER_HOST=api-server:8000
+      - APISERVER_HOST=backend-ma:8000
       - PIPELINES_DIR=/app/pipelines
       # 필요한 경우 특정 파이프라인 URL 추가 (주석 해제 후 사용)
       # - PIPELINES_URLS=https://github.com/open-webui/pipelines/blob/main/examples/filters/detoxify_filter_pipeline.py
     networks:
-      - ai-network
+      - ai-network-ma
 
-  api-server:
+  backend-ma:
     build:
       context: .
-      dockerfile: images/api-server/Dockerfile
-    container_name: api-server
+      dockerfile: images/backend/Dockerfile
+    container_name: backend-ma
     restart: unless-stopped
     ports:
       - "${APISERVER_PORT_EXTERNAL}:8000"
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - TAVILY_API_KEY=${TAVILY_API_KEY}
       - NAVER_CLIENT_ID=${NAVER_CLIENT_ID}
       - NAVER_CLIENT_SECRET=${NAVER_CLIENT_SECRET}
     networks:
-      - ai-network
+      - ai-network-ma
 
 volumes:
-  openwebui-data:
+  openwebui-data-ma:
   # pipelines-data:
 
 networks:
-  ai-network:
+  ai-network-ma:
     driver: bridge 
