@@ -11,7 +11,7 @@ services:
     environment:
       # - WEBUI_AUTH=true
       # - WEBUI_DATABASE_PATH=/app/backend/data/database.sqlite
-      - OPENAI_API_BASE_URL=http://pipelines:19099
+      - OPENAI_API_BASE_URL=http://pipelines-ma:9099
       - OPENAI_API_KEY=0p3n-w3bu!
     volumes:
       - openwebui-data-ma:/app/backend/data
@@ -32,8 +32,8 @@ services:
     image: ghcr.io/open-webui/pipelines:main
     container_name: pipelines-ma
     restart: unless-stopped
-    ports:
-      - "19099:9099"
+    expose:
+      - "9099"
     volumes:
       # - pipelines-data:/app/pipelines
       - ./pipelines:/app/pipelines
