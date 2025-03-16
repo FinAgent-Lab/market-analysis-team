@@ -43,7 +43,7 @@ jobs:
       - name: Build and tag Docker images
         shell: pwsh
         run: |
-          docker-compose build --no-cache backend
+          docker-compose build --no-cache backend-ma
       
       - name: Stop running containers
         shell: pwsh
