@@ -23,9 +23,9 @@ services:
               count: all
               capabilities: [gpu]
     depends_on:
-      - pipelines
+      - pipelines-ma
     networks:
-      - ai-network
+      - ai-network-ma
 
   # Pipelines - OpenWebUI 플러그인 프레임워크
   pipelines-ma:
@@ -43,7 +43,7 @@ services:
       # 필요한 경우 특정 파이프라인 URL 추가 (주석 해제 후 사용)
       # - PIPELINES_URLS=https://github.com/open-webui/pipelines/blob/main/examples/filters/detoxify_filter_pipeline.py
     networks:
-      - ai-network
+      - ai-network-ma
 
   backend-ma:
     build:
@@ -58,12 +58,12 @@ services:
       - NAVER_CLIENT_ID=${NAVER_CLIENT_ID}
       - NAVER_CLIENT_SECRET=${NAVER_CLIENT_SECRET}
     networks:
-      - ai-network
+      - ai-network-ma
 
 volumes:
   openwebui-data-ma:
   # pipelines-data:
 
 networks:
-  ai-network:
+  ai-network-ma:
     driver: bridge 
