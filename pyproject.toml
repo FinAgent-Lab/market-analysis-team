@@ -1,0 +1,24 @@
+[project]
+name = "market-analysis-team"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "dependency-injector>=4.46.0",
+    "fastapi>=0.115.11",
+    "langchain>=0.3.20",
+    "langchain-community>=0.3.19",
+    "langchain-openai>=0.3.7",
+    "langgraph>=0.3.5",
+    "python-dotenv>=1.0.1",
+    "rich>=13.9.4",
+    "ruff>=0.9.9",
+    "tavily-python>=0.5.1",
+    "uvicorn>=0.34.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.9.9",
+]

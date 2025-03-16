@@ -1,5 +1,7 @@
 # Market Analysis Agent
 
+# TODO: 업데이트 예정
+
 ## 초기 개발 구조
 ![프로젝트 구조](./assets/flowchart_1.png)
 
