@@ -27,7 +27,7 @@ jobs:
         shell: pwsh
         run: |
           @"
-          APISERVER_PORT_EXTERNAL=3100
+          APISERVER_PORT_EXTERNAL=13100
           OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
           NAVER_CLIENT_ID=${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET }}
@@ -61,7 +61,7 @@ jobs:
         run: |
           # 서비스가 정상적으로 시작되었는지 확인
           Start-Sleep -Seconds 20
-          $response = Invoke-WebRequest -Uri "http://localhost:3100/api/health" -UseBasicParsing
+          $response = Invoke-WebRequest -Uri "http://localhost:13100/api/health" -UseBasicParsing
           $content = $response.Content
           if (-not ($content -match '"status":\s*"healthy"')) {
             Write-Host "서비스 상태 확인 실패"
