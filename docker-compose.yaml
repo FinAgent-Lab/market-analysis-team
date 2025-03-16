@@ -32,6 +32,8 @@ services:
     image: ghcr.io/open-webui/pipelines:main
     container_name: pipelines-ma
     restart: unless-stopped
+    expose:
+      - "9099"
     # ports:
     #   - "9099:9099"
     volumes:
