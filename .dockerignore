@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+nexus_agent.log
+
+# Git
+.git/
+.gitattributes
+.gitignore
+.github/
+
+# Docker
+Dockerfile
+.docker
+docker-compose*.yml
+
+# Tests
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation
+docs/
+*.md
+LICENSE
+
+# Development
+# *.lock
+# *.toml
+.editorconfig
+.env.template
+PM/
+
+# Build
+dist/
+build/
+*.egg-info/ 
