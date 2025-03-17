@@ -2,7 +2,7 @@ name: Deploy to Self-Hosted Runner
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ dev, develop ]
 #   workflow_dispatch:
 #     inputs:
 #       environment:
