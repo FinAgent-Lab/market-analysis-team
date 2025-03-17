@@ -1,63 +1,85 @@
-# main.py
-
-import os
 from dotenv import load_dotenv
-load_dotenv()  # .env 파일의 환경변수 로드
 
-# 각 노드 모듈 import
-from nodes.research_supervisor import research_supervisor
-from nodes.retrieve_news import retrieve_news
-from nodes.retrieve_docs import retrieve_docs
-from nodes.get_stock_info import get_stock_info
-from nodes.write_report import write_report
+from dependency_injector.wiring import Provide, inject
+import uvicorn
 
-# common/state_graph.py 에서 GraphState 임포트
-from common.state_graph import GraphState
+from api.server import APIBuilder
+from src.graph.nodes import NaverNewsSearcherNode, ReportAssistantNode
+from src.utils.logger import setup_logger
+from src.graph.builder import SupervisorGraphBuilder
+from startup import Container
+from rich.console import Console
 
-# langgraph에서 제공하는 StateGraph, START, END, MemorySaver 임포트
-from langgraph.graph import StateGraph, START, END
-from langgraph.checkpoint.memory import MemorySaver
+console = Console()
+load_dotenv(override=True)
+logger = setup_logger("market_agent")
+logo = """
+[cyan]
+==============================================================================================
 
-# gpt-4o-mini 활용
-from langchain_openai import ChatOpenAI
-model = ChatOpenAI(model_name="gpt-4o-mini")
+███████ ██ ███    ██  █████   ██████  ███████ ███    ██ ████████       ██       █████  ██████  
+██      ██ ████   ██ ██   ██ ██       ██      ████   ██    ██          ██      ██   ██ ██   ██ 
+█████   ██ ██ ██  ██ ███████ ██   ███ █████   ██ ██  ██    ██    █████ ██      ███████ ██████  
+██      ██ ██  ██ ██ ██   ██ ██    ██ ██      ██  ██ ██    ██          ██      ██   ██ ██   ██ 
+██      ██ ██   ████ ██   ██  ██    ████  ███████ ██   ████    ██          ███████ ██   ██ ██████  
+                                                                                               
+----------------------------------------------------------------------------------------------
+                __  __          _       _                    _         _    
+                |  \/  |__ _ _ _| |_____| |_   __ _ _ _  __ _| |_  _ __(_)___
+                | |\/| / _` | '_| / / -_)  _| / _` | ' \/ _` | | || (_-< (_-<
+                |_|  |_\__,_|_| |_\_\___|\__| \__,_|_||_\__,_|_|\_, /__/_/__/
+                                                                |__/         
+----------------------------------------------------------------------------------------------
+# MEMBER(가나다 순)
+- 전병훈 (팀장)
+- 강동석
+- 백인걸
+- 엄창용        https://github.com/e7217
+- 왕수연
+- 장현상
+----------------------------------------------------------------------------------------------
+                                                    Since 2025.03.04, Let's study together!
+==============================================================================================
+"""
 
-# 워크플로우 생성 및 노드 등록
-workflow = StateGraph(GraphState)
 
-workflow.add_node("research_supervisor", research_supervisor)
-workflow.add_node("retrieve_news", retrieve_news)
-workflow.add_node("retrieve_docs", retrieve_docs)
-workflow.add_node("get_stock_info", get_stock_info)
-workflow.add_node("write_report", write_report)
+@inject
+def main(
+    graph_builder: SupervisorGraphBuilder = Provide[Container.supervisor_graph],
+):
+    console.print(logo)
+    logger.info("Starting Market Analysis Agent service...")
 
-##### 엣지 정의 예시 #####
-workflow.add_edge(START, "research_supervisor")
-workflow.add_edge("research_supervisor", "retrieve_news")
-workflow.add_edge("research_supervisor", "retrieve_docs")
-workflow.add_edge("research_supervisor", "get_stock_info")
-workflow.add_edge("retrieve_news", "write_report")
-workflow.add_edge("retrieve_docs", "write_report")
-workflow.add_edge("get_stock_info", "write_report")
-workflow.add_edge("write_report", END)
 
-# # 체크포인터 설정 및 워크플로우 실행
-# memory = MemorySaver()
+    ## 그래프 빌더
+    """
+    에이전트 노드를 이곳에 추가해주세요.
+    노드 추가 시, 다음의 기능을 동적으로 적용하게됩니다.
+    - supervisor 노드에 멤버로 등록
+    - 노드 이름을 기반으로 API 엔드포인트 생성(예: SampleNone -> /api/sample)
+    
+    Example:
+    graph_builder.add_node(NewNode())
+    """
+    graph_builder.add_node(NaverNewsSearcherNode())
+    graph_builder.add_node(ReportAssistantNode())
+    graph_builder.build()
 
-app = workflow.compile()
+    ## API 서버 빌더
+    api_builder = APIBuilder()
+    app = api_builder.create_app()
+    for node in graph_builder.get_nodes():
+        app.add_api_route(
+            f"/api/{node.__class__.__name__.lower().replace('node', '')}",
+            methods=["POST"],
+            endpoint=node.invoke,
+        )
 
-# 초기 상태 설정
-initial_state: GraphState = {
-    "messages": [],
-    "question": "",
-    "stocks": [],
-    "documents": [],
-    "news": [],
-    "stock_info": [],
-    "answer": "",
-    "rejected": "none",
-    "model": model,
-}
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
-result = app.invoke(initial_state)
-print(result["answer"])
+
+if __name__ == "__main__":
+    container = Container()
+    container.wire(modules=["api.route"])
+    container.wire(modules=[__name__])
+    main()

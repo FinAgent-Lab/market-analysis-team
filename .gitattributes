@@ -1,0 +1,2 @@
+# 모든 텍스트 파일에 대해 LF 사용
+* text=auto eol=lf
