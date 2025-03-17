@@ -67,6 +67,13 @@ python main.py
 이를 위해 본 프로젝트는 UI 또는 API를 활용합니다.
 
 ### 에이전트 노드를 추가하는 법
+구현체는 추상 클래스 Node를 실체화하여 작성합니다. 
+추상 클래스 Node의 주요 함수는 `__call__`, `_run`, `_invoke`, `invoke`이며, 개발 시에는 `_run` 함수와 `_invoke` 함수(선택사항)를  작성합니다. 
+`_run` 함수는 `SupervisorNode`와 연결을 위한 함수입니다.
+`_invoke` 함수는 API 서버를 통해 별도의 인터페이스를 갖고 싶다면 구현합니다. 
+클래스 관계도는 다음과 같습니다.
+![추상화-실체화](./assets/abstract_realize.png)
+
 1. `src/graph/nodes/`경로에 에이전트 코드를 작성합니다.
 2. 코드는 다음과 같이 작성합니다. 
 ```python
