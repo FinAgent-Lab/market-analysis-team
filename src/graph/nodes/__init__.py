@@ -19,5 +19,4 @@ __all__ = [
     "ChosunRSSFeederNode",
     "WSJEconomyRSSFeederNode",
     "WSJMarketRSSFeederNode",
-    "WSJTechRSSFeederNode",
 ]
