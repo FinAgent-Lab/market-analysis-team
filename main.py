@@ -4,7 +4,13 @@ from dependency_injector.wiring import Provide, inject
 import uvicorn
 
 from api.server import APIBuilder
-from src.graph.nodes import NaverNewsSearcherNode, ReportAssistantNode
+from src.graph.nodes import (
+    NaverNewsSearcherNode,
+    ReportAssistantNode,
+    ChosunRSSFeederNode,
+    WSJEconomyRSSFeederNode,
+    WSJMarketRSSFeederNode,
+)
 from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
 from startup import Container
@@ -50,7 +56,6 @@ def main(
     console.print(logo)
     logger.info("Starting Market Analysis Agent service...")
 
-
     ## 그래프 빌더
     """
     에이전트 노드를 이곳에 추가해주세요.
@@ -63,6 +68,9 @@ def main(
     """
     graph_builder.add_node(NaverNewsSearcherNode())
     graph_builder.add_node(ReportAssistantNode())
+    graph_builder.add_node(ChosunRSSFeederNode())
+    graph_builder.add_node(WSJEconomyRSSFeederNode())
+    graph_builder.add_node(WSJMarketRSSFeederNode())
     graph_builder.build()
 
     ## API 서버 빌더
