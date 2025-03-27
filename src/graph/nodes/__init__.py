@@ -7,6 +7,8 @@ from src.graph.nodes.rss_feeder import (
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
 )
+from src.graph.nodes.google_searcher import GoogleSearcherNode
+
 
 __all__ = [
     "Node",
@@ -19,4 +21,5 @@ __all__ = [
     "ChosunRSSFeederNode",
     "WSJEconomyRSSFeederNode",
     "WSJMarketRSSFeederNode",
+    "GoogleSearcherNode",
 ]
