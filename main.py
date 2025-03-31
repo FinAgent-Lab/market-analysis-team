@@ -10,6 +10,7 @@ from src.graph.nodes import (
     ChosunRSSFeederNode,
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
+    GoogleSearcherNode
 )
 from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
@@ -27,7 +28,7 @@ logo = """
 ██      ██ ████   ██ ██   ██ ██       ██      ████   ██    ██          ██      ██   ██ ██   ██ 
 █████   ██ ██ ██  ██ ███████ ██   ███ █████   ██ ██  ██    ██    █████ ██      ███████ ██████  
 ██      ██ ██  ██ ██ ██   ██ ██    ██ ██      ██  ██ ██    ██          ██      ██   ██ ██   ██ 
-██      ██ ██   ████ ██   ██  ██    ████  ███████ ██   ████    ██          ███████ ██   ██ ██████  
+██      ██ ██   ████ ██   ██  ██████  ███████ ██   ████    ██          ███████ ██   ██ ██████  
                                                                                                
 ----------------------------------------------------------------------------------------------
                 __  __          _       _                    _         _    
@@ -67,6 +68,7 @@ def main(
     graph_builder.add_node(NewNode())
     """
     graph_builder.add_node(NaverNewsSearcherNode())
+    graph_builder.add_node(GoogleSearcherNode())
     graph_builder.add_node(ReportAssistantNode())
     graph_builder.add_node(ChosunRSSFeederNode())
     graph_builder.add_node(WSJEconomyRSSFeederNode())
