@@ -40,9 +40,8 @@ Answer:"""
 
     def _run(self, state: dict) -> dict:
         assert state["llm"] is not None, "The State model should include llm"
+        # TODO: 버그 픽스, state에서 llm을 가져오면 chain.invoke에서 query key 오류 발생
         # self.llm = state["llm"]
-        self.logger.info(f"state: {state}")
-        self.logger.info(f"query: {state['messages'][-1].content}")
         result = self._get_chain().invoke(state["messages"][-1].content)
         self.logger.info(f"   result: {result}")
         return Command(
