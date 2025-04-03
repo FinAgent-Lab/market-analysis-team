@@ -95,7 +95,8 @@ def main(
 
 if __name__ == "__main__":
     container = Container()
-    container.wire(modules=["api.route"])
-    # container.wire(modules=["src.graph.nodes.weekly_reporter"])
-    container.wire(modules=[__name__])
+    container.wire(modules=[
+        __name__,
+        "api.route"
+        ])
     main()
