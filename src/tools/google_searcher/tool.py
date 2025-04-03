@@ -59,9 +59,7 @@ class GoogleSearchResults(BaseTool):
     ) -> Union[List[Dict], str]:
         """Use the tool."""
         try:
-            return self.api_wrapper.results(
-                query
-            )
+            return self.api_wrapper.results(query)
         except Exception as e:
             return repr(e)
 
@@ -72,9 +70,7 @@ class GoogleSearchResults(BaseTool):
     ) -> Union[List[Dict], str]:
         """Use the tool asynchronously."""
         try:
-            return await self.api_wrapper.results_async(
-                query
-            )
+            return await self.api_wrapper.results_async(query)
         except Exception as e:
             return repr(e)
 

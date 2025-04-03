@@ -10,7 +10,8 @@ from src.graph.nodes import (
     ChosunRSSFeederNode,
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
-    GoogleSearcherNode
+    GoogleSearcherNode,
+    WeeklyReporterNode,
 )
 from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
@@ -73,6 +74,10 @@ def main(
     graph_builder.add_node(ChosunRSSFeederNode())
     graph_builder.add_node(WSJEconomyRSSFeederNode())
     graph_builder.add_node(WSJMarketRSSFeederNode())
+
+    vector_store = Container.vector_store_recap()
+    graph_builder.add_node(WeeklyReporterNode(vector_store))
+
     graph_builder.build()
 
     ## API 서버 빌더
@@ -90,6 +95,8 @@ def main(
 
 if __name__ == "__main__":
     container = Container()
-    container.wire(modules=["api.route"])
-    container.wire(modules=[__name__])
+    container.wire(modules=[
+        __name__,
+        "api.route"
+        ])
     main()
