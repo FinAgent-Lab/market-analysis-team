@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 from dependency_injector.wiring import inject, Provider
 from langchain_text_splitters.character import RecursiveCharacterTextSplitter
 from pymilvus import connections, Collection
+import pymilvus
 
 from src.services.crawler_jpmorgan import CrawlerJPMorgan
 from src.services.duplicate_checker import DuplicateChecker
@@ -33,11 +34,15 @@ def scrape_jp_weekly_recap(vector_store: Provider[Container.vector_store_recap])
     # print("scrape_jp_weekly_recap result: ", result)
     
     collection.load()
-    result = collection.query(
-        expr=f'hash == "{hashlib.sha256(content).hexdigest()}"',
-        output_fields=["text"],
-        limit=1,
-    )
+    try:
+        result = collection.query(
+            expr=f'hash == "{hashlib.sha256(content).hexdigest()}"',
+            output_fields=["text"],
+            limit=1,
+        )
+    except pymilvus.exceptions.MilvusException as e:
+        print("scrape_jp_weekly_recap error: ", e)
+        result = []
     
     print("scrape_jp_weekly_recap result: ", result)
     
