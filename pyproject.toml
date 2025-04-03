@@ -13,6 +13,7 @@ dependencies = [
     "langchain-community>=0.3.19",
     "langchain-milvus>=0.1.8",
     "langchain-openai>=0.3.7",
+    "langchain-upstage>=0.6.0",
     "langgraph>=0.3.5",
     "python-dotenv>=1.0.1",
     "rich>=13.9.4",

@@ -18,6 +18,8 @@ from src.graph.builder import SupervisorGraphBuilder
 from startup import Container
 from rich.console import Console
 
+from src.tasks.weekly_recap_scraper import scrape_jp_weekly_recap
+
 console = Console()
 load_dotenv(override=True)
 logger = setup_logger("market_agent")
@@ -68,6 +70,7 @@ def main(
     Example:
     graph_builder.add_node(NewNode())
     """
+    
     graph_builder.add_node(NaverNewsSearcherNode())
     graph_builder.add_node(GoogleSearcherNode())
     graph_builder.add_node(ReportAssistantNode())
@@ -90,6 +93,8 @@ def main(
             endpoint=node.invoke,
         )
 
+    scrape_jp_weekly_recap(vector_store)
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
@@ -97,6 +102,7 @@ if __name__ == "__main__":
     container = Container()
     container.wire(modules=[
         __name__,
-        "api.route"
+        "api.route",
+        "src.tasks.weekly_recap_scraper"
         ])
     main()
