@@ -45,6 +45,33 @@ def scrape_jp_weekly_recap(vector_store: Provider[Container.vector_store_recap])
     chunks = splitter.split_text(content)
     
 
+    query_option = {
+        "query": "dummy",
+        "k": 1,
+        "filter": {
+            "hash": hashlib.sha256(content).hexdigest()
+        }
+    }
+
+    print("hash: ", hashlib.sha256(content).hexdigest())    
+    # result = vector_store.similarity_search(**query_option)
+    # print("scrape_jp_weekly_recap result: ", result)
+    
+    collection.load()
+    result = collection.query(
+        expr=f'hash == "{hashlib.sha256(content).hexdigest()}"',
+        output_fields=["text"],
+        limit=1,
+    )
+    
+    print("scrape_jp_weekly_recap result: ", result)
+    
+    if len(result) > 0:
+        return
+    
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    chunks = splitter.split_text(content)
+
     print("scrape_jp_weekly_recap chunks: ", chunks)
 
     # vector_store.add_texts(chunks)
