@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 import os
 from urllib.parse import urlparse
@@ -20,18 +21,7 @@ def scrape_jp_weekly_recap(vector_store: Provider[Container.vector_store_recap])
     collection = Collection(os.getenv("MILVUS_COLLECTION_NAME_RECAP", "weekly_recap"))
     
     content = CrawlerJPMorgan().get_weekly_recap()
-
-    query_option = {
-        "query": "dummy",
-        "k": 1,
-        "filter": {
-            "hash": hashlib.sha256(content).hexdigest()
-        }
-    }
-
     print("hash: ", hashlib.sha256(content).hexdigest())    
-    # result = vector_store.similarity_search(**query_option)
-    # print("scrape_jp_weekly_recap result: ", result)
     
     collection.load()
     try:
@@ -41,16 +31,19 @@ def scrape_jp_weekly_recap(vector_store: Provider[Container.vector_store_recap])
             limit=1,
         )
     except pymilvus.exceptions.MilvusException as e:
-        print("scrape_jp_weekly_recap error: ", e)
-        result = []
+        error_code = e.code if hasattr(e, "code") else "unknown"
+        if not error_code == 1100: # Error code 1100 indicates that the item could not be found
+            raise e
     
-    print("scrape_jp_weekly_recap result: ", result)
-    
-    if len(result) > 0:
+
+    # If the item is already in the database, skip the scraping process
+    if not error_code == 1100 and len(result) > 0:
         return
-    
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+
+    # Split the content into chunks of 2000 characters with 200 characters overlap
+    splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=100)
     chunks = splitter.split_text(content)
+    
 
     print("scrape_jp_weekly_recap chunks: ", chunks)
 
