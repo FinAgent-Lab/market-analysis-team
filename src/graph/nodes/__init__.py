@@ -10,6 +10,8 @@ from src.graph.nodes.rss_feeder import (
 from src.graph.nodes.google_searcher import GoogleSearcherNode
 from src.graph.nodes.weekly_reporter import WeeklyReporterNode
 
+from src.graph.nodes.hantoo_financial import HantooFinancialAnalyzerNode
+from src.graph.nodes.us_financial import USFinancialAnalyzerNode
 
 __all__ = [
     "Node",
@@ -25,4 +27,7 @@ __all__ = [
     "GoogleSearcherNode",
     # Weekly Reporter
     "WeeklyReporterNode",
+    # Financial Analyzers
+    "HantooFinancialAnalyzerNode",
+    "USFinancialAnalyzerNode",
 ]
