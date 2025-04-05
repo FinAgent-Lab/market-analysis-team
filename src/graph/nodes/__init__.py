@@ -8,7 +8,8 @@ from src.graph.nodes.rss_feeder import (
     WSJMarketRSSFeederNode,
 )
 from src.graph.nodes.google_searcher import GoogleSearcherNode
-
+from src.graph.nodes.hantoo_financial import HantooFinancialAnalyzerNode
+from src.graph.nodes.us_financial import USFinancialAnalyzerNode
 
 __all__ = [
     "Node",
@@ -22,4 +23,7 @@ __all__ = [
     "WSJEconomyRSSFeederNode",
     "WSJMarketRSSFeederNode",
     "GoogleSearcherNode",
+    # Financial Analyzers
+    "HantooFinancialAnalyzerNode",
+    "USFinancialAnalyzerNode",
 ]
