@@ -4,7 +4,15 @@ from dependency_injector.wiring import Provide, inject
 import uvicorn
 
 from api.server import APIBuilder
-from src.graph.nodes import NaverNewsSearcherNode, ReportAssistantNode
+from src.graph.nodes import (
+    NaverNewsSearcherNode,
+    ReportAssistantNode,
+    ChosunRSSFeederNode,
+    WSJEconomyRSSFeederNode,
+    WSJMarketRSSFeederNode,
+    GoogleSearcherNode,
+    USFinancialAnalyzerNode
+)
 from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
 from startup import Container
@@ -21,12 +29,12 @@ logo = """
 ██      ██ ████   ██ ██   ██ ██       ██      ████   ██    ██          ██      ██   ██ ██   ██ 
 █████   ██ ██ ██  ██ ███████ ██   ███ █████   ██ ██  ██    ██    █████ ██      ███████ ██████  
 ██      ██ ██  ██ ██ ██   ██ ██    ██ ██      ██  ██ ██    ██          ██      ██   ██ ██   ██ 
-██      ██ ██   ████ ██   ██  ██    ████  ███████ ██   ████    ██          ███████ ██   ██ ██████  
+██      ██ ██   ████ ██   ██  ██████  ███████ ██   ████    ██          ███████ ██   ██ ██████  
                                                                                                
 ----------------------------------------------------------------------------------------------
                 __  __          _       _                    _         _    
                 |  \/  |__ _ _ _| |_____| |_   __ _ _ _  __ _| |_  _ __(_)___
-                | |\/| / _` | '_| / / -_)  _| / _` | ' \/ _` | | || (_-< (_-<
+                | |\/| / _` | '_| / / -_)  _| / _` | ' \/ _` | | || (_-< (_-
                 |_|  |_\__,_|_| |_\_\___|\__| \__,_|_||_\__,_|_|\_, /__/_/__/
                                                                 |__/         
 ----------------------------------------------------------------------------------------------
@@ -45,11 +53,10 @@ logo = """
 
 @inject
 def main(
-    graph_builder: SupervisorGraphBuilder = Provide[Container.supervisor_graph],
+        graph_builder: SupervisorGraphBuilder = Provide[Container.supervisor_graph],
 ):
     console.print(logo)
     logger.info("Starting Market Analysis Agent service...")
-
 
     ## 그래프 빌더
     """
@@ -62,7 +69,18 @@ def main(
     graph_builder.add_node(NewNode())
     """
     graph_builder.add_node(NaverNewsSearcherNode())
+    graph_builder.add_node(GoogleSearcherNode())
     graph_builder.add_node(ReportAssistantNode())
+    graph_builder.add_node(ChosunRSSFeederNode())
+    graph_builder.add_node(WSJEconomyRSSFeederNode())
+    graph_builder.add_node(WSJMarketRSSFeederNode())
+
+    # 한투 API 분석 에이전트 노드 주석 처리 (미국 주식 노드로 대체)
+    # graph_builder.add_node(HantooFinancialAnalyzerNode())
+
+    # 미국 주식 분석 에이전트 노드 추가 (Alpha Vantage API 사용)
+    graph_builder.add_node(USFinancialAnalyzerNode())
+
     graph_builder.build()
 
     ## API 서버 빌더
