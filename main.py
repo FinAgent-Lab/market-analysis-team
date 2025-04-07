@@ -11,7 +11,8 @@ from src.graph.nodes import (
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
     GoogleSearcherNode,
-    USFinancialAnalyzerNode
+    USFinancialAnalyzerNode,
+    WeeklyReporterNode,
 )
 from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
@@ -81,6 +82,9 @@ def main(
     # 미국 주식 분석 에이전트 노드 추가 (Alpha Vantage API 사용)
     graph_builder.add_node(USFinancialAnalyzerNode())
 
+    vector_store = Container.vector_store_recap()
+    graph_builder.add_node(WeeklyReporterNode(vector_store))
+
     graph_builder.build()
 
     ## API 서버 빌더
@@ -98,6 +102,8 @@ def main(
 
 if __name__ == "__main__":
     container = Container()
-    container.wire(modules=["api.route"])
-    container.wire(modules=[__name__])
+    container.wire(modules=[
+        __name__,
+        "api.route"
+    ])
     main()

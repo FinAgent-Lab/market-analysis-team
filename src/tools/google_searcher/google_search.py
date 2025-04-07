@@ -17,6 +17,7 @@ GOOGLE_API_URL = "https://www.googleapis.com/customsearch/v1"
 DEFAULT_API_KEY = "AIzaSyDr8bn7cbpxmlnNVTVDTbxO5ZWWz7RvUN4"
 DEFAULT_CSE_ID = "c4f4cb24f0be5401e"
 
+
 class GoogleSearchAPIWrapper(BaseModel):
     """Wrapper for Google Custom Search API."""
 
@@ -37,17 +38,17 @@ class GoogleSearchAPIWrapper(BaseModel):
             )
         except ValueError:
             google_api_key = DEFAULT_API_KEY
-        
+
         try:
             google_cse_id = get_from_dict_or_env(
                 values, "google_cse_id", "GOOGLE_CSE_ID"
             )
         except ValueError:
             google_cse_id = DEFAULT_CSE_ID
-        
+
         values["google_api_key"] = google_api_key
         values["google_cse_id"] = google_cse_id
-        
+
         return values
 
     def raw_results(
@@ -59,27 +60,23 @@ class GoogleSearchAPIWrapper(BaseModel):
             api_key = self.google_api_key.get_secret_value()
         except ValueError:
             api_key = DEFAULT_API_KEY
-            
+
         try:
             cse_id = self.google_cse_id.get_secret_value()
         except ValueError:
             cse_id = DEFAULT_CSE_ID
-            
-        params = {
-            "key": api_key,
-            "cx": cse_id,
-            "q": query
-        }
-        
+
+        params = {"key": api_key, "cx": cse_id, "q": query}
+
         # Create a request with the URL and parameters
         url = f"{GOOGLE_API_URL}?{urllib.parse.urlencode(params)}"
         request = urllib.request.Request(url)
-        
+
         try:
             with urllib.request.urlopen(request) as response:
                 response_code = response.getcode()
                 if response_code == 200:
-                    return json.loads(response.read().decode('utf-8'))
+                    return json.loads(response.read().decode("utf-8"))
                 else:
                     raise Exception(f"Error Code: {response_code}")
         except urllib.error.HTTPError as e:
@@ -111,17 +108,13 @@ class GoogleSearchAPIWrapper(BaseModel):
             api_key = self.google_api_key.get_secret_value()
         except ValueError:
             api_key = DEFAULT_API_KEY
-            
+
         try:
             cse_id = self.google_cse_id.get_secret_value()
         except ValueError:
             cse_id = DEFAULT_CSE_ID
-            
-        params = {
-            "key": api_key,
-            "cx": cse_id,
-            "q": query
-        }
+
+        params = {"key": api_key, "cx": cse_id, "q": query}
 
         async with aiohttp.ClientSession() as session:
             async with session.get(GOOGLE_API_URL, params=params) as response:
@@ -152,7 +145,7 @@ class GoogleSearchAPIWrapper(BaseModel):
                 "link": result.get("link", ""),
                 "description": result.get("snippet", ""),
             }
-            
+
             # Add optional fields if they exist
             if "pagemap" in result and "metatags" in result["pagemap"]:
                 for metatag in result["pagemap"]["metatags"]:
@@ -160,6 +153,6 @@ class GoogleSearchAPIWrapper(BaseModel):
                         clean_result["source"] = metatag["og:site_name"]
                     if "article:published_time" in metatag:
                         clean_result["pubDate"] = metatag["article:published_time"]
-            
+
             clean_results.append(clean_result)
         return clean_results
