@@ -5,19 +5,23 @@ from langchain_core.messages import HumanMessage
 
 from src.graph.nodes.base import Node
 from src.models.do import RawResponse
-from src.tools.naver_searcher.tool import NaverNewsSearch
+from src.tools.rss_feeder.tool import RSSFeederTool
 
 
-class NaverNewsSearcherNode(Node):
+class RSSFeederBase(Node):
     def __init__(self):
         super().__init__()
         self.system_prompt = (
-            "You are a news search agent for korean news using naver search api."
-            "Only use korean source and data to conduct news search."
+            "You are a rss feeder agent to get news from a specific rss feed."
+            "If rss feed is not related to the query, do nothing."
             "Do nothing else"
         )
         self.agent = None
-        self.tools = [NaverNewsSearch(sort="date")]
+        self.tools = [
+            RSSFeederTool(
+                url="https://www.chosun.com/arc/outboundfeeds/rss/category/economy/?outputType=xml"
+            )
+        ]
 
     def _run(self, state: dict) -> dict:
         if self.agent is None:
@@ -50,3 +54,33 @@ class NaverNewsSearcherNode(Node):
         )
         result = agent.invoke({"messages": [("human", query)]})
         return RawResponse(answer=result["messages"][-1].content)
+
+
+class ChosunRSSFeederNode(RSSFeederBase):
+    def __init__(self):
+        super().__init__()
+        self.tools = [
+            RSSFeederTool(
+                url="https://www.chosun.com/arc/outboundfeeds/rss/category/economy/?outputType=xml"
+            )
+        ]
+
+
+class WSJEconomyRSSFeederNode(RSSFeederBase):
+    def __init__(self):
+        super().__init__()
+        self.tools = [
+            RSSFeederTool(
+                url="https://feeds.content.dowjones.io/public/rss/socialeconomyfeed"
+            )
+        ]
+
+
+class WSJMarketRSSFeederNode(RSSFeederBase):
+    def __init__(self):
+        super().__init__()
+        self.tools = [
+            RSSFeederTool(
+                url="https://feeds.content.dowjones.io/public/rss/RSSMarketsMain"
+            )
+        ]
