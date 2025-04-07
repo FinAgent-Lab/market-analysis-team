@@ -25,7 +25,8 @@ class ReportAssistantNode(Node):
             update={
                 "messages": [
                     HumanMessage(
-                        content=result["messages"][-1].content, name=self.__class__.__name__.lower().replace("node", "")
+                        content=result["messages"][-1].content,
+                        name=self.__class__.__name__.lower().replace("node", ""),
                     )
                 ]
             },
