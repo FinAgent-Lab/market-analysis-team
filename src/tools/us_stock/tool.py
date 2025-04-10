@@ -1,21 +1,22 @@
 """Tool for the Alpha Vantage financial statements analysis."""
 
-from typing import Dict, List, Optional, Type, Union, Any
-from typing_extensions import Literal
+from typing import Dict, Optional, Type, Union
 
 from langchain_core.callbacks import (
-    AsyncCallbackManagerForToolRun,
     CallbackManagerForToolRun,
 )
 from langchain_core.tools import BaseTool
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field
 
 from src.tools.us_stock.alpha_vantage import AlphaVantageAPIWrapper
 
 
 class USStockInput(BaseModel):
     """Input for the US financial statement analysis tool."""
-    query: str = Field(description="query containing company name or US stock ticker symbol (e.g., Apple, AAPL, Microsoft, MSFT)")
+
+    query: str = Field(
+        description="query containing company name or US stock ticker symbol (e.g., Apple, AAPL, Microsoft, MSFT)"
+    )
 
 
 class USFinancialStatementTool(BaseTool):
@@ -67,7 +68,8 @@ class USFinancialStatementTool(BaseTool):
 
             # 응답이 유효한 티커 형식인지 확인 (1-5개의 대문자)
             import re
-            if response != "UNKNOWN" and re.match(r'^[A-Z]{1,5}$', response):
+
+            if response != "UNKNOWN" and re.match(r"^[A-Z]{1,5}$", response):
                 # Alpha Vantage API를 통해 실제 존재하는지 확인
                 try:
                     result = self.api_wrapper.get_company_overview(response)
@@ -84,9 +86,9 @@ class USFinancialStatementTool(BaseTool):
             return None
 
     def _run(
-            self,
-            query: str,
-            run_manager: Optional[CallbackManagerForToolRun] = None,
+        self,
+        query: str,
+        run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> Union[Dict, str]:
         """Run the tool."""
         try:
@@ -127,13 +129,19 @@ class USFinancialStatementTool(BaseTool):
             if "Description" in profile:
                 output.append(f"- Description: {profile['Description'][:300]}...")
             if "MarketCapitalization" in profile:
-                output.append(f"- Market Cap: ${float(profile['MarketCapitalization']):,.2f}")
-            if "FullTimeEmployees" in profile and profile['FullTimeEmployees']:
+                output.append(
+                    f"- Market Cap: ${float(profile['MarketCapitalization']):,.2f}"
+                )
+            if "FullTimeEmployees" in profile and profile["FullTimeEmployees"]:
                 output.append(f"- Employees: {profile['FullTimeEmployees']}")
-            if "DividendYield" in profile and profile['DividendYield']:
-                output.append(f"- Dividend Yield: {float(profile['DividendYield']) * 100:.2f}%")
+            if "DividendYield" in profile and profile["DividendYield"]:
+                output.append(
+                    f"- Dividend Yield: {float(profile['DividendYield']) * 100:.2f}%"
+                )
             if "52WeekHigh" in profile and "52WeekLow" in profile:
-                output.append(f"- 52-Week Range: ${float(profile['52WeekLow']):.2f} - ${float(profile['52WeekHigh']):.2f}")
+                output.append(
+                    f"- 52-Week Range: ${float(profile['52WeekLow']):.2f} - ${float(profile['52WeekHigh']):.2f}"
+                )
 
         # Balance sheet information
         balance_sheet = analysis_data.get("balance_sheet", {}).get("annualReports", [])
@@ -146,20 +154,32 @@ class USFinancialStatementTool(BaseTool):
             if "totalAssets" in recent:
                 output.append(f"- Total Assets: ${float(recent['totalAssets']):,.2f}")
             if "totalCurrentAssets" in recent:
-                output.append(f"- Current Assets: ${float(recent['totalCurrentAssets']):,.2f}")
+                output.append(
+                    f"- Current Assets: ${float(recent['totalCurrentAssets']):,.2f}"
+                )
             if "totalLiabilities" in recent:
-                output.append(f"- Total Liabilities: ${float(recent['totalLiabilities']):,.2f}")
+                output.append(
+                    f"- Total Liabilities: ${float(recent['totalLiabilities']):,.2f}"
+                )
             if "totalCurrentLiabilities" in recent:
-                output.append(f"- Current Liabilities: ${float(recent['totalCurrentLiabilities']):,.2f}")
+                output.append(
+                    f"- Current Liabilities: ${float(recent['totalCurrentLiabilities']):,.2f}"
+                )
             if "totalShareholderEquity" in recent:
-                output.append(f"- Total Shareholder Equity: ${float(recent['totalShareholderEquity']):,.2f}")
+                output.append(
+                    f"- Total Shareholder Equity: ${float(recent['totalShareholderEquity']):,.2f}"
+                )
             if "longTermDebt" in recent:
-                output.append(f"- Long-Term Debt: ${float(recent['longTermDebt']):,.2f}")
+                output.append(
+                    f"- Long-Term Debt: ${float(recent['longTermDebt']):,.2f}"
+                )
             if "cash" in recent:
                 output.append(f"- Cash and Equivalents: ${float(recent['cash']):,.2f}")
 
         # Income statement information
-        income_statement = analysis_data.get("income_statement", {}).get("annualReports", [])
+        income_statement = analysis_data.get("income_statement", {}).get(
+            "annualReports", []
+        )
         if income_statement and len(income_statement) > 0:
             output.append("\n## Income Statement Information")
             recent = income_statement[0]
@@ -169,13 +189,19 @@ class USFinancialStatementTool(BaseTool):
             if "totalRevenue" in recent:
                 output.append(f"- Total Revenue: ${float(recent['totalRevenue']):,.2f}")
             if "costOfRevenue" in recent:
-                output.append(f"- Cost of Revenue: ${float(recent['costOfRevenue']):,.2f}")
+                output.append(
+                    f"- Cost of Revenue: ${float(recent['costOfRevenue']):,.2f}"
+                )
             if "grossProfit" in recent:
                 output.append(f"- Gross Profit: ${float(recent['grossProfit']):,.2f}")
             if "operatingExpenses" in recent:
-                output.append(f"- Operating Expenses: ${float(recent['operatingExpenses']):,.2f}")
+                output.append(
+                    f"- Operating Expenses: ${float(recent['operatingExpenses']):,.2f}"
+                )
             if "operatingIncome" in recent:
-                output.append(f"- Operating Income: ${float(recent['operatingIncome']):,.2f}")
+                output.append(
+                    f"- Operating Income: ${float(recent['operatingIncome']):,.2f}"
+                )
             if "netIncome" in recent:
                 output.append(f"- Net Income: ${float(recent['netIncome']):,.2f}")
             if "ebitda" in recent:
@@ -190,15 +216,25 @@ class USFinancialStatementTool(BaseTool):
             output.append(f"Reference Period: {period}")
 
             if "operatingCashflow" in recent:
-                output.append(f"- Operating Cash Flow: ${float(recent['operatingCashflow']):,.2f}")
+                output.append(
+                    f"- Operating Cash Flow: ${float(recent['operatingCashflow']):,.2f}"
+                )
             if "cashflowFromInvestment" in recent:
-                output.append(f"- Cash Flow from Investment: ${float(recent['cashflowFromInvestment']):,.2f}")
+                output.append(
+                    f"- Cash Flow from Investment: ${float(recent['cashflowFromInvestment']):,.2f}"
+                )
             if "cashflowFromFinancing" in recent:
-                output.append(f"- Cash Flow from Financing: ${float(recent['cashflowFromFinancing']):,.2f}")
+                output.append(
+                    f"- Cash Flow from Financing: ${float(recent['cashflowFromFinancing']):,.2f}"
+                )
             if "capitalExpenditures" in recent:
-                output.append(f"- Capital Expenditures: ${float(recent['capitalExpenditures']):,.2f}")
-            if "dividendPayout" in recent and float(recent['dividendPayout']) > 0:
-                output.append(f"- Dividend Payout: ${float(recent['dividendPayout']):,.2f}")
+                output.append(
+                    f"- Capital Expenditures: ${float(recent['capitalExpenditures']):,.2f}"
+                )
+            if "dividendPayout" in recent and float(recent["dividendPayout"]) > 0:
+                output.append(
+                    f"- Dividend Payout: ${float(recent['dividendPayout']):,.2f}"
+                )
 
         # Financial ratios from profile
         if profile:
@@ -209,21 +245,35 @@ class USFinancialStatementTool(BaseTool):
             if "PEGRatio" in profile:
                 output.append(f"- PEG Ratio: {float(profile['PEGRatio']):,.2f}")
             if "PriceToBookRatio" in profile:
-                output.append(f"- Price to Book Ratio: {float(profile['PriceToBookRatio']):,.2f}")
+                output.append(
+                    f"- Price to Book Ratio: {float(profile['PriceToBookRatio']):,.2f}"
+                )
             if "EPS" in profile:
                 output.append(f"- EPS: ${float(profile['EPS']):,.2f}")
             if "ReturnOnEquityTTM" in profile:
-                output.append(f"- Return on Equity (TTM): {float(profile['ReturnOnEquityTTM']) * 100:.2f}%")
+                output.append(
+                    f"- Return on Equity (TTM): {float(profile['ReturnOnEquityTTM']) * 100:.2f}%"
+                )
             if "ReturnOnAssetsTTM" in profile:
-                output.append(f"- Return on Assets (TTM): {float(profile['ReturnOnAssetsTTM']) * 100:.2f}%")
+                output.append(
+                    f"- Return on Assets (TTM): {float(profile['ReturnOnAssetsTTM']) * 100:.2f}%"
+                )
             if "OperatingMarginTTM" in profile:
-                output.append(f"- Operating Margin (TTM): {float(profile['OperatingMarginTTM']) * 100:.2f}%")
+                output.append(
+                    f"- Operating Margin (TTM): {float(profile['OperatingMarginTTM']) * 100:.2f}%"
+                )
             if "ProfitMargin" in profile:
-                output.append(f"- Profit Margin: {float(profile['ProfitMargin']) * 100:.2f}%")
+                output.append(
+                    f"- Profit Margin: {float(profile['ProfitMargin']) * 100:.2f}%"
+                )
             if "QuarterlyEarningsGrowthYOY" in profile:
-                output.append(f"- Quarterly Earnings Growth (YOY): {float(profile['QuarterlyEarningsGrowthYOY']) * 100:.2f}%")
+                output.append(
+                    f"- Quarterly Earnings Growth (YOY): {float(profile['QuarterlyEarningsGrowthYOY']) * 100:.2f}%"
+                )
             if "QuarterlyRevenueGrowthYOY" in profile:
-                output.append(f"- Quarterly Revenue Growth (YOY): {float(profile['QuarterlyRevenueGrowthYOY']) * 100:.2f}%")
+                output.append(
+                    f"- Quarterly Revenue Growth (YOY): {float(profile['QuarterlyRevenueGrowthYOY']) * 100:.2f}%"
+                )
 
         # Analysis information
         analysis = analysis_data.get("analysis", {})
@@ -252,13 +302,17 @@ class USFinancialStatementTool(BaseTool):
             if "revenue_growth" in analysis:
                 output.append(f"- Revenue Growth: {analysis['revenue_growth']}")
                 if "revenue_growth_evaluation" in analysis:
-                    output.append(f"  - Evaluation: {analysis['revenue_growth_evaluation']}")
+                    output.append(
+                        f"  - Evaluation: {analysis['revenue_growth_evaluation']}"
+                    )
 
             # Profitability analysis
             if "operating_margin" in analysis:
                 output.append(f"- Operating Margin: {analysis['operating_margin']}")
                 if "profitability_evaluation" in analysis:
-                    output.append(f"  - Evaluation: {analysis['profitability_evaluation']}")
+                    output.append(
+                        f"  - Evaluation: {analysis['profitability_evaluation']}"
+                    )
 
             # Other margin metrics
             if "gross_margin" in analysis:

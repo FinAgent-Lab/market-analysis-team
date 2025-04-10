@@ -7,6 +7,7 @@ from src.graph.nodes.base import Node
 from src.models.do import RawResponse
 from src.tools.us_stock.tool import USFinancialStatementTool
 
+
 class USFinancialAnalyzerNode(Node):
     def __init__(self):
         super().__init__()
@@ -47,7 +48,7 @@ class USFinancialAnalyzerNode(Node):
         # 에이전트 실행
         result = self.agent.invoke(state)
 
-        analysis_text = result['messages'][-1].content
+        analysis_text = result["messages"][-1].content
         self.logger.info(f"US Financial analysis result: \n{analysis_text}")
 
         # 추출된 티커가 있으면 그대로 사용, 없으면 unknown
@@ -66,7 +67,7 @@ class USFinancialAnalyzerNode(Node):
                     "ticker": ticker,
                     "market": "US",
                     "analysis_text": analysis_text,
-                }
+                },
             },
             goto="supervisor",
         )
@@ -79,7 +80,7 @@ class USFinancialAnalyzerNode(Node):
         )
 
         # _invoke 호출 시에도 LLM 설정
-        if not hasattr(self.tools[0], 'llm') or self.tools[0].llm is None:
+        if not hasattr(self.tools[0], "llm") or self.tools[0].llm is None:
             self.tools[0].llm = ChatOpenAI(model=self.DEFAULT_LLM_MODEL)
 
         result = agent.invoke({"messages": [("human", query)]})
