@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 
 from dependency_injector.wiring import Provide, inject
 import uvicorn
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from api.server import APIBuilder
 from src.graph.nodes import (
@@ -83,8 +84,7 @@ def main(
     # graph_builder.add_node(HantooFinancialAnalyzerNode())
 
     # 미국 주식 분석 에이전트 노드 추가 (Alpha Vantage API 사용)
-    graph_builder.add_node(USFinancialAnalyzerNode())
-
+    # graph_builder.add_node(USFinancialAnalyzerNode())
 
     vector_store = Container.vector_store_recap()
     graph_builder.add_node(WeeklyReporterNode(vector_store))
@@ -101,9 +101,17 @@ def main(
             endpoint=node.invoke,
         )
 
-    scrape_jp_weekly_recap(vector_store)
-
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    scheduler = BackgroundScheduler(daemon=True)
+    scheduler.add_job(
+        scrape_jp_weekly_recap,
+        'cron',
+        hour='6,9,12,15,18',
+        minute=0,
+        args=[vector_store]
+    )
+    scheduler.start()
+    
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
 if __name__ == "__main__":
