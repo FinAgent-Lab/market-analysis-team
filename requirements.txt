@@ -73,3 +73,6 @@ urllib3==2.3.0
 uvicorn==0.34.0
 yarl==1.18.3
 zstandard==0.23.0
+requests-html==0.10.0
+cloudscraper==1.2.71
+feedparser==6.0.11

@@ -11,7 +11,7 @@ from src.graph.nodes.google_searcher import GoogleSearcherNode
 from src.graph.nodes.hantoo_financial import HantooFinancialAnalyzerNode
 from src.graph.nodes.us_financial import USFinancialAnalyzerNode
 from src.graph.nodes.weekly_reporter import WeeklyReporterNode
-
+from src.graph.nodes.alpha_searcher import AlphaSearcherNode
 __all__ = [
     "Node",
     "SupervisorNode",
@@ -29,4 +29,5 @@ __all__ = [
     "USFinancialAnalyzerNode",
     # Weekly Reporter
     "WeeklyReporterNode",
+    "AlphaSearcherNode",
 ]

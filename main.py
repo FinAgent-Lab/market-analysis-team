@@ -13,6 +13,7 @@ from src.graph.nodes import (
     GoogleSearcherNode,
     USFinancialAnalyzerNode,
     WeeklyReporterNode,
+    AlphaSearcherNode
 )
 from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
@@ -85,6 +86,8 @@ def main(
     vector_store = Container.vector_store_recap()
     graph_builder.add_node(WeeklyReporterNode(vector_store))
 
+    graph_builder.add_node(AlphaSearcherNode())
+    
     graph_builder.build()
 
     ## API 서버 빌더
