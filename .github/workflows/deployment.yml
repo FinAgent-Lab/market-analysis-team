@@ -66,7 +66,7 @@ jobs:
         shell: pwsh
         run: |
           # 서비스가 정상적으로 시작되었는지 확인
-          Start-Sleep -Seconds 20
+          Start-Sleep -Seconds 30
           $response = Invoke-WebRequest -Uri "http://localhost:13100/api/health" -UseBasicParsing
           $content = $response.Content
           if (-not ($content -match '"status":\s*"healthy"')) {
