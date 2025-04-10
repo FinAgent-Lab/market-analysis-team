@@ -12,6 +12,7 @@ from src.graph.nodes import (
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
     GoogleSearcherNode,
+    USFinancialAnalyzerNode,
     WeeklyReporterNode,
     USFinancialAnalyzerNode
 )
