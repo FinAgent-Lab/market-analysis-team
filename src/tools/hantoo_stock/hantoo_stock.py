@@ -6,7 +6,7 @@ https://apiportal.koreainvestment.com/
 
 import json
 import time
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 import requests
 
 from langchain_core.utils import get_from_dict_or_env
@@ -51,7 +51,7 @@ class HantooStockAPIWrapper(BaseModel):
         body = {
             "grant_type": "client_credentials",
             "appkey": self.hantoo_app_key.get_secret_value(),
-            "appsecret": self.hantoo_app_secret.get_secret_value()
+            "appsecret": self.hantoo_app_secret.get_secret_value(),
         }
 
         response = requests.post(url, headers=headers, data=json.dumps(body))
@@ -65,7 +65,14 @@ class HantooStockAPIWrapper(BaseModel):
         else:
             raise Exception(f"Failed to get access token: {response_data}")
 
-    def make_request(self, method: str, endpoint: str, tr_id: str, params: Optional[Dict] = None, data: Optional[Dict] = None) -> Dict:
+    def make_request(
+        self,
+        method: str,
+        endpoint: str,
+        tr_id: str,
+        params: Optional[Dict] = None,
+        data: Optional[Dict] = None,
+    ) -> Dict:
         """Make API request to Korea Investment & Securities API."""
         url = f"{self.base_url}{endpoint}"
         access_token = self.get_access_token()
@@ -76,7 +83,7 @@ class HantooStockAPIWrapper(BaseModel):
             "appkey": self.hantoo_app_key.get_secret_value(),
             "appsecret": self.hantoo_app_secret.get_secret_value(),
             "tr_id": tr_id,
-            "custtype": "P"  # Individual customer type
+            "custtype": "P",  # Individual customer type
         }
 
         if method.upper() == "GET":
@@ -101,7 +108,7 @@ class HantooStockAPIWrapper(BaseModel):
         params = {
             "FID_DIV_CLS_CODE": f"{div_cls}",  # 0:year, 1:quarter
             "fid_cond_mrkt_div_code": "J",
-            "fid_input_iscd": stock_code
+            "fid_input_iscd": stock_code,
         }
 
         try:
@@ -121,7 +128,7 @@ class HantooStockAPIWrapper(BaseModel):
         params = {
             "FID_DIV_CLS_CODE": f"{div_cls}",  # 0:year, 1:quarter
             "fid_cond_mrkt_div_code": "J",
-            "fid_input_iscd": stock_code
+            "fid_input_iscd": stock_code,
         }
 
         try:
@@ -141,7 +148,7 @@ class HantooStockAPIWrapper(BaseModel):
         params = {
             "FID_DIV_CLS_CODE": f"{div_cls}",  # 0:year, 1:quarter
             "fid_cond_mrkt_div_code": "J",
-            "fid_input_iscd": stock_code
+            "fid_input_iscd": stock_code,
         }
 
         try:
@@ -159,7 +166,7 @@ class HantooStockAPIWrapper(BaseModel):
         tr_id = "CTPF1002R"
         params = {
             "PRDT_TYPE_CD": "300",  # 300 for stocks
-            "PDNO": stock_code
+            "PDNO": stock_code,
         }
 
         try:
@@ -169,10 +176,7 @@ class HantooStockAPIWrapper(BaseModel):
 
     def analyze_financial_statements(self, stock_code: str) -> Dict:
         """Analyze financial statements for a stock."""
-        result = {
-            "stock_code": stock_code,
-            "timestamp": time.time()
-        }
+        result = {"stock_code": stock_code, "timestamp": time.time()}
 
         # Get basic stock info
         try:
@@ -237,7 +241,7 @@ class HantooStockAPIWrapper(BaseModel):
                 analysis["current_liabilities"] = f"{current_liabilities:,.2f}"
 
                 if current_liabilities > 0:
-                    current_ratio = (current_assets / current_liabilities)
+                    current_ratio = current_assets / current_liabilities
                     analysis["current_ratio"] = f"{current_ratio:.2f}"
 
                     if current_ratio > 2:
@@ -272,7 +276,6 @@ class HantooStockAPIWrapper(BaseModel):
                 recent = income_statement[0]
                 previous = income_statement[1]
 
-
                 recent_sales = float(recent.get("sale_account", 0))
                 recent_op_profit = float(recent.get("bsop_prti", 0))
                 recent_net_income = float(recent.get("thtr_ntin", 0))
@@ -288,7 +291,9 @@ class HantooStockAPIWrapper(BaseModel):
 
                 # Calculate growth rates
                 if previous_sales > 0:
-                    sales_growth = ((recent_sales - previous_sales) / previous_sales) * 100
+                    sales_growth = (
+                        (recent_sales - previous_sales) / previous_sales
+                    ) * 100
                     analysis["sales_growth"] = f"{sales_growth:.2f}%"
 
                     if sales_growth > 20:
@@ -312,11 +317,15 @@ class HantooStockAPIWrapper(BaseModel):
                     elif op_margin > 5:
                         analysis["profitability_evaluation"] = "Average profitability"
                     else:
-                        analysis["profitability_evaluation"] = "Below average profitability"
+                        analysis["profitability_evaluation"] = (
+                            "Below average profitability"
+                        )
 
                 # Net income growth
                 if previous_net_income > 0:
-                    net_income_growth = ((recent_net_income - previous_net_income) / previous_net_income) * 100
+                    net_income_growth = (
+                        (recent_net_income - previous_net_income) / previous_net_income
+                    ) * 100
                     analysis["net_income_growth"] = f"{net_income_growth:.2f}%"
             except Exception as e:
                 analysis["income_statement_analysis_error"] = str(e)
@@ -326,7 +335,6 @@ class HantooStockAPIWrapper(BaseModel):
         if financial_ratios and len(financial_ratios) >= 1:
             try:
                 recent = financial_ratios[0]
-
 
                 roe = float(recent.get("roe_val", 0))
                 eps = float(recent.get("eps", 0))

@@ -14,7 +14,6 @@ from src.graph.nodes import (
     GoogleSearcherNode,
     USFinancialAnalyzerNode,
     WeeklyReporterNode,
-    USFinancialAnalyzerNode
 )
 from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
@@ -58,7 +57,7 @@ logo = """
 
 @inject
 def main(
-        graph_builder: SupervisorGraphBuilder = Provide[Container.supervisor_graph],
+    graph_builder: SupervisorGraphBuilder = Provide[Container.supervisor_graph],
 ):
     console.print(logo)
     logger.info("Starting Market Analysis Agent service...")
@@ -73,7 +72,7 @@ def main(
     Example:
     graph_builder.add_node(NewNode())
     """
-    
+
     graph_builder.add_node(NaverNewsSearcherNode())
     graph_builder.add_node(GoogleSearcherNode())
     graph_builder.add_node(ReportAssistantNode())
@@ -105,21 +104,17 @@ def main(
     scheduler = BackgroundScheduler(daemon=True)
     scheduler.add_job(
         scrape_jp_weekly_recap,
-        'cron',
-        hour='6,9,12,15,18',
+        "cron",
+        hour="6,9,12,15,18",
         minute=0,
-        args=[vector_store]
+        args=[vector_store],
     )
     scheduler.start()
-    
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
 if __name__ == "__main__":
     container = Container()
-    container.wire(modules=[
-        __name__,
-        "api.route",
-        "src.tasks.weekly_recap_scraper"
-        ])
+    container.wire(modules=[__name__, "api.route", "src.tasks.weekly_recap_scraper"])
     main()
