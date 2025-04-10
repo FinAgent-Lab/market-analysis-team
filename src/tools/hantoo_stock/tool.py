@@ -1,10 +1,8 @@
 """Tool for the Korea Investment & Securities API financial statements analysis."""
 
-from typing import Dict, List, Optional, Type, Union
-from typing_extensions import Literal
+from typing import Dict, Optional, Type, Union
 
 from langchain_core.callbacks import (
-    AsyncCallbackManagerForToolRun,
     CallbackManagerForToolRun,
 )
 from langchain_core.tools import BaseTool
@@ -44,22 +42,25 @@ class HantooFinancialStatementTool(BaseTool):
     def _extract_stock_code(self, query: str) -> Optional[str]:
         """Extract stock code from query."""
         import re
+
         # Try to find a 6-digit code in the query
-        match = re.search(r'(\d{6})', query)
+        match = re.search(r"(\d{6})", query)
         if match:
             return match.group(1)
 
         # If no direct code is found, look for patterns like "code: 005930" or "Samsung Electronics(005930)"
-        match = re.search(r'(?:[code|stock code]?[:\s]*|[^\w\d]*\()(\d{6})(?:\)|)', query)
+        match = re.search(
+            r"(?:[code|stock code]?[:\s]*|[^\w\d]*\()(\d{6})(?:\)|)", query
+        )
         if match:
             return match.group(1)
 
         return None
 
     def _run(
-            self,
-            query: str,
-            run_manager: Optional[CallbackManagerForToolRun] = None,
+        self,
+        query: str,
+        run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> Union[Dict, str]:
         """Run the tool."""
         try:
@@ -101,9 +102,13 @@ class HantooFinancialStatementTool(BaseTool):
             if "fxas" in recent:
                 output.append(f"- Fixed Assets: {recent['fxas']} million KRW")
             if "total_lblt" in recent:
-                output.append(f"- Total Liabilities: {recent['total_lblt']} million KRW")
+                output.append(
+                    f"- Total Liabilities: {recent['total_lblt']} million KRW"
+                )
             if "flow_lblt" in recent:
-                output.append(f"- Current Liabilities: {recent['flow_lblt']} million KRW")
+                output.append(
+                    f"- Current Liabilities: {recent['flow_lblt']} million KRW"
+                )
             if "total_cptl" in recent:
                 output.append(f"- Total Equity: {recent['total_cptl']} million KRW")
 
@@ -118,7 +123,9 @@ class HantooFinancialStatementTool(BaseTool):
             if "sale_account" in recent:
                 output.append(f"- Revenue: {recent['sale_account']} million KRW")
             if "sale_cost" in recent:
-                output.append(f"- Cost of Goods Sold: {recent['sale_cost']} million KRW")
+                output.append(
+                    f"- Cost of Goods Sold: {recent['sale_cost']} million KRW"
+                )
             if "sale_totl_prfi" in recent:
                 output.append(f"- Gross Profit: {recent['sale_totl_prfi']} million KRW")
             if "bsop_prti" in recent:
@@ -166,13 +173,17 @@ class HantooFinancialStatementTool(BaseTool):
             if "sales_growth" in analysis:
                 output.append(f"- Sales Growth: {analysis['sales_growth']}")
                 if "sales_growth_evaluation" in analysis:
-                    output.append(f"  - Evaluation: {analysis['sales_growth_evaluation']}")
+                    output.append(
+                        f"  - Evaluation: {analysis['sales_growth_evaluation']}"
+                    )
 
             # Profitability analysis
             if "operating_margin" in analysis:
                 output.append(f"- Operating Margin: {analysis['operating_margin']}")
                 if "profitability_evaluation" in analysis:
-                    output.append(f"  - Evaluation: {analysis['profitability_evaluation']}")
+                    output.append(
+                        f"  - Evaluation: {analysis['profitability_evaluation']}"
+                    )
 
             # ROE analysis
             if "roe" in analysis:

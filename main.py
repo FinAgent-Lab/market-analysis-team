@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 
 from dependency_injector.wiring import Provide, inject
 import uvicorn
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from api.server import APIBuilder
 from src.graph.nodes import (
@@ -18,6 +19,8 @@ from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
 from startup import Container
 from rich.console import Console
+
+from src.tasks.weekly_recap_scraper import scrape_jp_weekly_recap
 
 console = Console()
 load_dotenv(override=True)
@@ -54,7 +57,7 @@ logo = """
 
 @inject
 def main(
-        graph_builder: SupervisorGraphBuilder = Provide[Container.supervisor_graph],
+    graph_builder: SupervisorGraphBuilder = Provide[Container.supervisor_graph],
 ):
     console.print(logo)
     logger.info("Starting Market Analysis Agent service...")
@@ -69,6 +72,7 @@ def main(
     Example:
     graph_builder.add_node(NewNode())
     """
+
     graph_builder.add_node(NaverNewsSearcherNode())
     graph_builder.add_node(GoogleSearcherNode())
     graph_builder.add_node(ReportAssistantNode())
@@ -80,7 +84,7 @@ def main(
     # graph_builder.add_node(HantooFinancialAnalyzerNode())
 
     # 미국 주식 분석 에이전트 노드 추가 (Alpha Vantage API 사용)
-    graph_builder.add_node(USFinancialAnalyzerNode())
+    # graph_builder.add_node(USFinancialAnalyzerNode())
 
     vector_store = Container.vector_store_recap()
     graph_builder.add_node(WeeklyReporterNode(vector_store))
@@ -97,13 +101,20 @@ def main(
             endpoint=node.invoke,
         )
 
+    scheduler = BackgroundScheduler(daemon=True)
+    scheduler.add_job(
+        scrape_jp_weekly_recap,
+        "cron",
+        hour="6,9,12,15,18",
+        minute=0,
+        args=[vector_store],
+    )
+    scheduler.start()
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
 if __name__ == "__main__":
     container = Container()
-    container.wire(modules=[
-        __name__,
-        "api.route"
-    ])
+    container.wire(modules=[__name__, "api.route", "src.tasks.weekly_recap_scraper"])
     main()

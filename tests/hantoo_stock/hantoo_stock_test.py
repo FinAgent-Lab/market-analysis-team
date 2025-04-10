@@ -1,6 +1,5 @@
 import unittest
 from unittest.mock import patch, MagicMock
-import json
 import os
 from dotenv import load_dotenv
 
@@ -9,9 +8,11 @@ load_dotenv()
 
 # 경로 설정
 import sys
-sys.path.append('..')  # 상위 디렉토리 추가
+
+sys.path.append("..")  # 상위 디렉토리 추가
 
 from src.tools.hantoo_stock.hantoo_stock import HantooStockAPIWrapper
+
 
 class TestHantooStockAPI(unittest.TestCase):
     """한투 API 래퍼 테스트 클래스"""
@@ -19,7 +20,9 @@ class TestHantooStockAPI(unittest.TestCase):
     def setUp(self):
         """테스트 설정"""
         # API 키가 환경변수에 설정되어 있는지 확인
-        self.api_key_exists = "HANTOO_APP_KEY" in os.environ and "HANTOO_APP_SECRET" in os.environ
+        self.api_key_exists = (
+            "HANTOO_APP_KEY" in os.environ and "HANTOO_APP_SECRET" in os.environ
+        )
 
         if self.api_key_exists:
             self.api = HantooStockAPIWrapper()
@@ -33,8 +36,8 @@ class TestHantooStockAPI(unittest.TestCase):
         self.assertIsNotNone(token)
         self.assertTrue(len(token) > 10)  # 토큰이 유효한 길이인지 확인
 
-    @patch('src.tools.hantoo_stock.hantoo_stock.HantooStockAPIWrapper.get_access_token')
-    @patch('requests.get')
+    @patch("src.tools.hantoo_stock.hantoo_stock.HantooStockAPIWrapper.get_access_token")
+    @patch("requests.get")
     def test_get_stock_info(self, mock_get, mock_get_token):
         """주식 기본 정보 조회 테스트"""
         # 목 응답 설정
@@ -45,9 +48,9 @@ class TestHantooStockAPI(unittest.TestCase):
             "output": {
                 "prdt_name": "삼성전자",
                 "pdno": "005930",
-                "bstp_cls_code": "01"
+                "bstp_cls_code": "01",
             },
-            "rt_cd": "0"
+            "rt_cd": "0",
         }
         mock_get.return_value = mock_response
 
@@ -59,8 +62,8 @@ class TestHantooStockAPI(unittest.TestCase):
         self.assertEqual(result["output"]["prdt_name"], "삼성전자")
         self.assertEqual(result["output"]["pdno"], "005930")
 
-    @patch('src.tools.hantoo_stock.hantoo_stock.HantooStockAPIWrapper.get_access_token')
-    @patch('requests.get')
+    @patch("src.tools.hantoo_stock.hantoo_stock.HantooStockAPIWrapper.get_access_token")
+    @patch("requests.get")
     def test_get_balance_sheet(self, mock_get, mock_get_token):
         """대차대조표 조회 테스트"""
         # 목 응답 설정
@@ -76,10 +79,10 @@ class TestHantooStockAPI(unittest.TestCase):
                     "fxas": "2000000",
                     "total_lblt": "2500000",
                     "flow_lblt": "1500000",
-                    "total_cptl": "2500000"
+                    "total_cptl": "2500000",
                 }
             ],
-            "rt_cd": "0"
+            "rt_cd": "0",
         }
         mock_get.return_value = mock_response
 
@@ -91,8 +94,8 @@ class TestHantooStockAPI(unittest.TestCase):
         self.assertEqual(result["output"][0]["total_aset"], "5000000")
         self.assertEqual(result["output"][0]["total_cptl"], "2500000")
 
-    @patch('src.tools.hantoo_stock.hantoo_stock.HantooStockAPIWrapper.get_access_token')
-    @patch('requests.get')
+    @patch("src.tools.hantoo_stock.hantoo_stock.HantooStockAPIWrapper.get_access_token")
+    @patch("requests.get")
     def test_get_income_statement(self, mock_get, mock_get_token):
         """손익계산서 조회 테스트"""
         # 목 응답 설정
@@ -107,10 +110,10 @@ class TestHantooStockAPI(unittest.TestCase):
                     "sale_cost": "700000",
                     "sale_totl_prfi": "300000",
                     "bsop_prti": "200000",
-                    "thtr_ntin": "150000"
+                    "thtr_ntin": "150000",
                 }
             ],
-            "rt_cd": "0"
+            "rt_cd": "0",
         }
         mock_get.return_value = mock_response
 
@@ -122,8 +125,8 @@ class TestHantooStockAPI(unittest.TestCase):
         self.assertEqual(result["output"][0]["sale_account"], "1000000")
         self.assertEqual(result["output"][0]["thtr_ntin"], "150000")
 
-    @patch('src.tools.hantoo_stock.hantoo_stock.HantooStockAPIWrapper.get_access_token')
-    @patch('requests.get')
+    @patch("src.tools.hantoo_stock.hantoo_stock.HantooStockAPIWrapper.get_access_token")
+    @patch("requests.get")
     def test_analyze_financial_statements(self, mock_get, mock_get_token):
         """재무제표 분석 테스트"""
         # 목 토큰 설정
@@ -150,7 +153,7 @@ class TestHantooStockAPI(unittest.TestCase):
                             "fxas": "2000000",
                             "total_lblt": "2500000",
                             "flow_lblt": "1500000",
-                            "total_cptl": "2500000"
+                            "total_cptl": "2500000",
                         }
                     ]
                 }
@@ -164,14 +167,14 @@ class TestHantooStockAPI(unittest.TestCase):
                             "stac_yymm": "202312",
                             "sale_account": "1000000",
                             "bsop_prti": "200000",
-                            "thtr_ntin": "150000"
+                            "thtr_ntin": "150000",
                         },
                         {
                             "stac_yymm": "202212",
                             "sale_account": "900000",
                             "bsop_prti": "180000",
-                            "thtr_ntin": "140000"
-                        }
+                            "thtr_ntin": "140000",
+                        },
                     ]
                 }
                 return mock_resp
@@ -184,7 +187,7 @@ class TestHantooStockAPI(unittest.TestCase):
                             "stac_yymm": "202312",
                             "roe_val": "12.5",
                             "eps": "5000",
-                            "bps": "40000"
+                            "bps": "40000",
                         }
                     ]
                 }
@@ -212,5 +215,6 @@ class TestHantooStockAPI(unittest.TestCase):
         self.assertIn("debt_ratio", analysis)
         self.assertIn("sales_growth", analysis)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
