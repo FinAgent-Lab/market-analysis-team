@@ -7,6 +7,7 @@ from src.graph.nodes.base import Node
 from src.models.do import RawResponse
 from src.tools.hantoo_stock.tool import HantooFinancialStatementTool
 
+
 class HantooFinancialAnalyzerNode(Node):
     def __init__(self):
         super().__init__()
@@ -34,10 +35,14 @@ class HantooFinancialAnalyzerNode(Node):
         # Run the agent
         result = self.agent.invoke(state)
 
-        self.logger.info(f"Financial analysis result: \n{result['messages'][-1].content}")
+        self.logger.info(
+            f"Financial analysis result: \n{result['messages'][-1].content}"
+        )
 
         # Extract the stock code
-        stock_code = self._extract_stock_code_from_result(result['messages'][-1].content)
+        stock_code = self._extract_stock_code_from_result(
+            result["messages"][-1].content
+        )
 
         return Command(
             update={
@@ -51,7 +56,7 @@ class HantooFinancialAnalyzerNode(Node):
                 "financial_analysis": {
                     "stock_code": stock_code,
                     "analysis_text": result["messages"][-1].content,
-                }
+                },
             },
             goto="supervisor",
         )
@@ -68,23 +73,24 @@ class HantooFinancialAnalyzerNode(Node):
     def _extract_stock_code_from_result(self, result_text: str) -> str:
         """Extract stock code from result text"""
         import re
+
         # Try to find patterns like "Stock Code 005930"
-        match = re.search(r'Stock Code (\d{6})', result_text)
+        match = re.search(r"Stock Code (\d{6})", result_text)
         if match:
             return match.group(1)
 
         # Try alternative patterns
-        match = re.search(r'stock code[:\s]*(\d{6})', result_text, re.IGNORECASE)
+        match = re.search(r"stock code[:\s]*(\d{6})", result_text, re.IGNORECASE)
         if match:
             return match.group(1)
 
         # Try to find "company with code XXXXXX" pattern
-        match = re.search(r'company with code (\d{6})', result_text, re.IGNORECASE)
+        match = re.search(r"company with code (\d{6})", result_text, re.IGNORECASE)
         if match:
             return match.group(1)
 
         # More general pattern - find any 6-digit number in the text
-        match = re.search(r'(\d{6})', result_text)
+        match = re.search(r"(\d{6})", result_text)
         if match:
             return match.group(1)
 
