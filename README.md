@@ -158,7 +158,7 @@ API 서버의 기본 포트는 `8000`번이며, 서버 호스트의 `/docs`경�
 
 ![API 화면](./assets/api.png)
 
-### OpenWebUI에 추가하는 법
+### OpenWebUI에 추가하는 방법
 
 OpenWebUI에 추가하기 위해서는 pipeline 코드 작성이 필요합니다. 
 예시 코드는 `pipelines/agent_pipeline_example.py`를 참고합니다. 
