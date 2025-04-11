@@ -31,6 +31,10 @@ jobs:
           OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
           NAVER_CLIENT_ID=${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET }}
+          MILVUS_URL_RECAP=${{ vars.MILVUS_URL_RECAP }}
+          MILVUS_DB_NAME_RECAP=${{ vars.MILVUS_DB_NAME_RECAP }}
+          MILVUS_COLLECTION_NAME_RECAP=${{ vars.MILVUS_COLLECTION_NAME_RECAP }}
+
           "@ | Out-File -FilePath .env -Encoding utf8
       
     #   - name: Login to GitHub Container Registry
@@ -62,7 +66,7 @@ jobs:
         shell: pwsh
         run: |
           # 서비스가 정상적으로 시작되었는지 확인
-          Start-Sleep -Seconds 20
+          Start-Sleep -Seconds 30
           $response = Invoke-WebRequest -Uri "http://localhost:13100/api/health" -UseBasicParsing
           $content = $response.Content
           if (-not ($content -match '"status":\s*"healthy"')) {

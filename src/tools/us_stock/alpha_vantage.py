@@ -1,8 +1,7 @@
 """Util that calls Alpha Vantage API."""
 
-import json
 import time
-from typing import Dict, List, Optional
+from typing import Dict
 import requests
 
 from langchain_core.utils import get_from_dict_or_env
@@ -26,9 +25,7 @@ class AlphaVantageAPIWrapper(BaseModel):
     @classmethod
     def validate_environment(cls, values: Dict) -> Dict:
         """Validate that api key exists in environment."""
-        api_key = get_from_dict_or_env(
-            values, "api_key", "ALPHA_VANTAGE_API_KEY"
-        )
+        api_key = get_from_dict_or_env(values, "api_key", "ALPHA_VANTAGE_API_KEY")
         values["api_key"] = api_key
         return values
 
@@ -38,7 +35,11 @@ class AlphaVantageAPIWrapper(BaseModel):
         current_time = time.time()
 
         # Return from cache if available and not expired
-        if cache_key in self.cache and current_time - self.cache_timestamp.get(cache_key, 0) < self.base_cache_time:
+        if (
+            cache_key in self.cache
+            and current_time - self.cache_timestamp.get(cache_key, 0)
+            < self.base_cache_time
+        ):
             return self.cache[cache_key]
 
         # Fetch new data
@@ -57,7 +58,7 @@ class AlphaVantageAPIWrapper(BaseModel):
                 "function": function,
                 "symbol": symbol,
                 "apikey": self.api_key.get_secret_value(),
-                **kwargs
+                **kwargs,
             }
 
             response = requests.get(self.base_url, params=params)
@@ -143,10 +144,7 @@ class AlphaVantageAPIWrapper(BaseModel):
 
     def analyze_financial_statements(self, ticker: str) -> Dict:
         """Analyze financial statements for a stock."""
-        result = {
-            "ticker": ticker,
-            "timestamp": time.time()
-        }
+        result = {"ticker": ticker, "timestamp": time.time()}
 
         # Get company overview
         try:
@@ -165,7 +163,9 @@ class AlphaVantageAPIWrapper(BaseModel):
             if "error" not in balance_sheet:
                 result["balance_sheet"] = balance_sheet
             else:
-                result["balance_sheet_error"] = balance_sheet.get("error", "Unknown error")
+                result["balance_sheet_error"] = balance_sheet.get(
+                    "error", "Unknown error"
+                )
         except Exception as e:
             result["balance_sheet_error"] = str(e)
 
@@ -175,7 +175,9 @@ class AlphaVantageAPIWrapper(BaseModel):
             if "error" not in income_statement:
                 result["income_statement"] = income_statement
             else:
-                result["income_statement_error"] = income_statement.get("error", "Unknown error")
+                result["income_statement_error"] = income_statement.get(
+                    "error", "Unknown error"
+                )
         except Exception as e:
             result["income_statement_error"] = str(e)
 
@@ -208,7 +210,9 @@ class AlphaVantageAPIWrapper(BaseModel):
                 if "Industry" in profile:
                     analysis["industry"] = profile["Industry"]
                 if "MarketCapitalization" in profile:
-                    analysis["market_cap"] = f"${float(profile['MarketCapitalization']):,.2f}"
+                    analysis["market_cap"] = (
+                        f"${float(profile['MarketCapitalization']):,.2f}"
+                    )
                 if "FullTimeEmployees" in profile:
                     analysis["employees"] = f"{profile['FullTimeEmployees']}"
 
@@ -220,11 +224,13 @@ class AlphaVantageAPIWrapper(BaseModel):
                 if "PEGRatio" in profile:
                     analysis["peg_ratio"] = f"{float(profile['PEGRatio']):,.2f}"
                 if "DividendYield" in profile:
-                    analysis["dividend_yield"] = f"{float(profile['DividendYield']) * 100:,.2f}%"
+                    analysis["dividend_yield"] = (
+                        f"{float(profile['DividendYield']) * 100:,.2f}%"
+                    )
                 if "PriceToBookRatio" in profile:
                     analysis["pb_ratio"] = f"{float(profile['PriceToBookRatio']):,.2f}"
                 if "ReturnOnEquityTTM" in profile:
-                    roe = float(profile['ReturnOnEquityTTM']) * 100
+                    roe = float(profile["ReturnOnEquityTTM"]) * 100
                     analysis["roe"] = f"{roe:,.2f}%"
                     if roe > 15:
                         analysis["roe_evaluation"] = "Excellent ROE"
@@ -235,9 +241,11 @@ class AlphaVantageAPIWrapper(BaseModel):
                     else:
                         analysis["roe_evaluation"] = "Below average ROE"
                 if "ReturnOnAssetsTTM" in profile:
-                    analysis["roa"] = f"{float(profile['ReturnOnAssetsTTM']) * 100:,.2f}%"
+                    analysis["roa"] = (
+                        f"{float(profile['ReturnOnAssetsTTM']) * 100:,.2f}%"
+                    )
                 if "OperatingMarginTTM" in profile:
-                    op_margin = float(profile['OperatingMarginTTM']) * 100
+                    op_margin = float(profile["OperatingMarginTTM"]) * 100
                     analysis["operating_margin"] = f"{op_margin:,.2f}%"
                     if op_margin > 15:
                         analysis["profitability_evaluation"] = "Excellent profitability"
@@ -246,15 +254,23 @@ class AlphaVantageAPIWrapper(BaseModel):
                     elif op_margin > 5:
                         analysis["profitability_evaluation"] = "Average profitability"
                     else:
-                        analysis["profitability_evaluation"] = "Below average profitability"
+                        analysis["profitability_evaluation"] = (
+                            "Below average profitability"
+                        )
                 if "ProfitMargin" in profile:
-                    analysis["profit_margin"] = f"{float(profile['ProfitMargin']) * 100:,.2f}%"
+                    analysis["profit_margin"] = (
+                        f"{float(profile['ProfitMargin']) * 100:,.2f}%"
+                    )
             except Exception as e:
                 analysis["profile_analysis_error"] = str(e)
 
         # Balance sheet analysis
         balance_sheet_data = data.get("balance_sheet", {})
-        if balance_sheet_data and "annualReports" in balance_sheet_data and len(balance_sheet_data["annualReports"]) > 0:
+        if (
+            balance_sheet_data
+            and "annualReports" in balance_sheet_data
+            and len(balance_sheet_data["annualReports"]) > 0
+        ):
             try:
                 recent = balance_sheet_data["annualReports"][0]
 
@@ -276,7 +292,7 @@ class AlphaVantageAPIWrapper(BaseModel):
                 analysis["current_liabilities"] = f"${current_liabilities:,.2f}"
 
                 if current_liabilities > 0:
-                    current_ratio = (current_assets / current_liabilities)
+                    current_ratio = current_assets / current_liabilities
                     analysis["current_ratio"] = f"{current_ratio:.2f}"
 
                     if current_ratio > 2:
@@ -306,7 +322,11 @@ class AlphaVantageAPIWrapper(BaseModel):
 
         # Income statement analysis
         income_statement_data = data.get("income_statement", {})
-        if income_statement_data and "annualReports" in income_statement_data and len(income_statement_data["annualReports"]) >= 2:
+        if (
+            income_statement_data
+            and "annualReports" in income_statement_data
+            and len(income_statement_data["annualReports"]) >= 2
+        ):
             try:
                 recent = income_statement_data["annualReports"][0]
                 previous = income_statement_data["annualReports"][1]
@@ -328,7 +348,9 @@ class AlphaVantageAPIWrapper(BaseModel):
 
                 # Growth rates
                 if previous_revenue > 0:
-                    revenue_growth = ((recent_revenue - previous_revenue) / previous_revenue) * 100
+                    revenue_growth = (
+                        (recent_revenue - previous_revenue) / previous_revenue
+                    ) * 100
                     analysis["revenue_growth"] = f"{revenue_growth:.2f}%"
 
                     if revenue_growth > 20:
@@ -347,21 +369,31 @@ class AlphaVantageAPIWrapper(BaseModel):
                     net_margin = (recent_net_income / recent_revenue) * 100
 
                     analysis["gross_margin"] = f"{gross_margin:.2f}%"
-                    if "operating_margin" not in analysis:  # Only add if not already added from profile
+                    if (
+                        "operating_margin" not in analysis
+                    ):  # Only add if not already added from profile
                         analysis["operating_margin"] = f"{operating_margin:.2f}%"
                         if operating_margin > 15:
-                            analysis["profitability_evaluation"] = "Excellent profitability"
+                            analysis["profitability_evaluation"] = (
+                                "Excellent profitability"
+                            )
                         elif operating_margin > 10:
                             analysis["profitability_evaluation"] = "Good profitability"
                         elif operating_margin > 5:
-                            analysis["profitability_evaluation"] = "Average profitability"
+                            analysis["profitability_evaluation"] = (
+                                "Average profitability"
+                            )
                         else:
-                            analysis["profitability_evaluation"] = "Below average profitability"
+                            analysis["profitability_evaluation"] = (
+                                "Below average profitability"
+                            )
                     analysis["net_margin"] = f"{net_margin:.2f}%"
 
                 # Net income growth
                 if previous_net_income > 0:
-                    net_income_growth = ((recent_net_income - previous_net_income) / previous_net_income) * 100
+                    net_income_growth = (
+                        (recent_net_income - previous_net_income) / previous_net_income
+                    ) * 100
                     analysis["net_income_growth"] = f"{net_income_growth:.2f}%"
             except Exception as e:
                 analysis["income_statement_analysis_error"] = str(e)
