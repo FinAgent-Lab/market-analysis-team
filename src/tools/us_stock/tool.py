@@ -42,12 +42,19 @@ class USFinancialStatementTool(BaseTool):
     def llm(self, value):
         self._llm = value
 
-    def safe_format(self, value: Any, prefix: str = "", suffix: str = "", decimal_places: int = 2) -> str:
+    def safe_format(
+        self, value: Any, prefix: str = "", suffix: str = "", decimal_places: int = 2
+    ) -> str:
         """
         Safely format financial values.
         Returns 'No data' for None or 'None' values.
         """
-        if value is None or value == "" or value == "None" or (isinstance(value, str) and value.strip().lower() == 'none'):
+        if (
+            value is None
+            or value == ""
+            or value == "None"
+            or (isinstance(value, str) and value.strip().lower() == "none")
+        ):
             return "No data"
         try:
             float_val = self.api_wrapper.safe_float_or_empty(value)
@@ -103,9 +110,9 @@ class USFinancialStatementTool(BaseTool):
             return None
 
     def _run(
-            self,
-            query: str,
-            run_manager: Optional[CallbackManagerForToolRun] = None,
+        self,
+        query: str,
+        run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> Union[Dict, str]:
         """Run the tool."""
         try:
@@ -158,7 +165,9 @@ class USFinancialStatementTool(BaseTool):
 
             # Always check for existence and use safe_format
             if "DividendYield" in profile:
-                div_yield = self.api_wrapper.safe_float_or_empty(profile['DividendYield'])
+                div_yield = self.api_wrapper.safe_float_or_empty(
+                    profile["DividendYield"]
+                )
                 if div_yield is not None:
                     output.append(
                         f"- Dividend Yield: {self.safe_format(div_yield * 100, suffix='%')}"
@@ -168,8 +177,8 @@ class USFinancialStatementTool(BaseTool):
 
             # Always use safe_format
             if "52WeekHigh" in profile and "52WeekLow" in profile:
-                high = self.safe_format(profile['52WeekHigh'], prefix='$')
-                low = self.safe_format(profile['52WeekLow'], prefix='$')
+                high = self.safe_format(profile["52WeekHigh"], prefix="$")
+                low = self.safe_format(profile["52WeekLow"], prefix="$")
                 output.append(f"- 52-Week Range: {low} - {high}")
 
         # Balance sheet information
@@ -181,7 +190,9 @@ class USFinancialStatementTool(BaseTool):
             output.append(f"Reference Period: {period}")
 
             if "totalAssets" in recent:
-                output.append(f"- Total Assets: {self.safe_format(recent['totalAssets'], prefix='$')}")
+                output.append(
+                    f"- Total Assets: {self.safe_format(recent['totalAssets'], prefix='$')}"
+                )
             if "totalCurrentAssets" in recent:
                 output.append(
                     f"- Current Assets: {self.safe_format(recent['totalCurrentAssets'], prefix='$')}"
@@ -203,7 +214,9 @@ class USFinancialStatementTool(BaseTool):
                     f"- Long-Term Debt: {self.safe_format(recent['longTermDebt'], prefix='$')}"
                 )
             if "cash" in recent:
-                output.append(f"- Cash and Equivalents: {self.safe_format(recent['cash'], prefix='$')}")
+                output.append(
+                    f"- Cash and Equivalents: {self.safe_format(recent['cash'], prefix='$')}"
+                )
 
         # Income statement information
         income_statement = analysis_data.get("income_statement", {}).get(
@@ -216,13 +229,17 @@ class USFinancialStatementTool(BaseTool):
             output.append(f"Reference Period: {period}")
 
             if "totalRevenue" in recent:
-                output.append(f"- Total Revenue: {self.safe_format(recent['totalRevenue'], prefix='$')}")
+                output.append(
+                    f"- Total Revenue: {self.safe_format(recent['totalRevenue'], prefix='$')}"
+                )
             if "costOfRevenue" in recent:
                 output.append(
                     f"- Cost of Revenue: {self.safe_format(recent['costOfRevenue'], prefix='$')}"
                 )
             if "grossProfit" in recent:
-                output.append(f"- Gross Profit: {self.safe_format(recent['grossProfit'], prefix='$')}")
+                output.append(
+                    f"- Gross Profit: {self.safe_format(recent['grossProfit'], prefix='$')}"
+                )
             if "operatingExpenses" in recent:
                 output.append(
                     f"- Operating Expenses: {self.safe_format(recent['operatingExpenses'], prefix='$')}"
@@ -232,9 +249,13 @@ class USFinancialStatementTool(BaseTool):
                     f"- Operating Income: {self.safe_format(recent['operatingIncome'], prefix='$')}"
                 )
             if "netIncome" in recent:
-                output.append(f"- Net Income: {self.safe_format(recent['netIncome'], prefix='$')}")
+                output.append(
+                    f"- Net Income: {self.safe_format(recent['netIncome'], prefix='$')}"
+                )
             if "ebitda" in recent:
-                output.append(f"- EBITDA: {self.safe_format(recent['ebitda'], prefix='$')}")
+                output.append(
+                    f"- EBITDA: {self.safe_format(recent['ebitda'], prefix='$')}"
+                )
 
         # Cash flow information
         cash_flow = analysis_data.get("cash_flow", {}).get("annualReports", [])
@@ -283,7 +304,7 @@ class USFinancialStatementTool(BaseTool):
 
             # Use safe_float_or_empty for conversion
             if "ReturnOnEquityTTM" in profile:
-                roe = self.api_wrapper.safe_float_or_empty(profile['ReturnOnEquityTTM'])
+                roe = self.api_wrapper.safe_float_or_empty(profile["ReturnOnEquityTTM"])
                 if roe is not None:
                     output.append(
                         f"- Return on Equity (TTM): {self.safe_format(roe * 100, suffix='%')}"
@@ -292,7 +313,7 @@ class USFinancialStatementTool(BaseTool):
                     output.append("- Return on Equity (TTM): No data")
 
             if "ReturnOnAssetsTTM" in profile:
-                roa = self.api_wrapper.safe_float_or_empty(profile['ReturnOnAssetsTTM'])
+                roa = self.api_wrapper.safe_float_or_empty(profile["ReturnOnAssetsTTM"])
                 if roa is not None:
                     output.append(
                         f"- Return on Assets (TTM): {self.safe_format(roa * 100, suffix='%')}"
@@ -301,7 +322,9 @@ class USFinancialStatementTool(BaseTool):
                     output.append("- Return on Assets (TTM): No data")
 
             if "OperatingMarginTTM" in profile:
-                op_margin = self.api_wrapper.safe_float_or_empty(profile['OperatingMarginTTM'])
+                op_margin = self.api_wrapper.safe_float_or_empty(
+                    profile["OperatingMarginTTM"]
+                )
                 if op_margin is not None:
                     output.append(
                         f"- Operating Margin (TTM): {self.safe_format(op_margin * 100, suffix='%')}"
@@ -310,7 +333,9 @@ class USFinancialStatementTool(BaseTool):
                     output.append("- Operating Margin (TTM): No data")
 
             if "ProfitMargin" in profile:
-                profit_margin = self.api_wrapper.safe_float_or_empty(profile['ProfitMargin'])
+                profit_margin = self.api_wrapper.safe_float_or_empty(
+                    profile["ProfitMargin"]
+                )
                 if profit_margin is not None:
                     output.append(
                         f"- Profit Margin: {self.safe_format(profit_margin * 100, suffix='%')}"
@@ -319,7 +344,9 @@ class USFinancialStatementTool(BaseTool):
                     output.append("- Profit Margin: No data")
 
             if "QuarterlyEarningsGrowthYOY" in profile:
-                earnings_growth = self.api_wrapper.safe_float_or_empty(profile['QuarterlyEarningsGrowthYOY'])
+                earnings_growth = self.api_wrapper.safe_float_or_empty(
+                    profile["QuarterlyEarningsGrowthYOY"]
+                )
                 if earnings_growth is not None:
                     output.append(
                         f"- Quarterly Earnings Growth (YOY): {self.safe_format(earnings_growth * 100, suffix='%')}"
@@ -328,7 +355,9 @@ class USFinancialStatementTool(BaseTool):
                     output.append("- Quarterly Earnings Growth (YOY): No data")
 
             if "QuarterlyRevenueGrowthYOY" in profile:
-                revenue_growth = self.api_wrapper.safe_float_or_empty(profile['QuarterlyRevenueGrowthYOY'])
+                revenue_growth = self.api_wrapper.safe_float_or_empty(
+                    profile["QuarterlyRevenueGrowthYOY"]
+                )
                 if revenue_growth is not None:
                     output.append(
                         f"- Quarterly Revenue Growth (YOY): {self.safe_format(revenue_growth * 100, suffix='%')}"

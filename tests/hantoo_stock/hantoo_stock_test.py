@@ -19,7 +19,7 @@ class TestHantooStockAPI(unittest.TestCase):
         """테스트 설정"""
         # API 키가 환경변수에 설정되어 있는지 확인
         self.api_key_exists = (
-                "HANTOO_APP_KEY" in os.environ and "HANTOO_APP_SECRET" in os.environ
+            "HANTOO_APP_KEY" in os.environ and "HANTOO_APP_SECRET" in os.environ
         )
 
         if self.api_key_exists:
