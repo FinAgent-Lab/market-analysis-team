@@ -36,7 +36,9 @@ class USFinancialAnalyzerNode(Node):
         try:
             # LangSmith API 키 설정 확인
             if "LANGSMITH_API_KEY" not in os.environ:
-                self.logger.warning("LANGSMITH_API_KEY 환경 변수가 설정되지 않았습니다. LangSmith 추적이 비활성화됩니다.")
+                self.logger.warning(
+                    "LANGSMITH_API_KEY 환경 변수가 설정되지 않았습니다. LangSmith 추적이 비활성화됩니다."
+                )
                 self.langsmith_enabled = False
             else:
                 # LangSmith 클라이언트 초기화
@@ -69,7 +71,9 @@ class USFinancialAnalyzerNode(Node):
                 # LLM 참조를 도구의 속성에 추가
                 self.tools[0].llm = llm
 
-                self.logger.debug("ReAct 에이전트 생성 중 (도구 및 시스템 프롬프트 설정)")
+                self.logger.debug(
+                    "ReAct 에이전트 생성 중 (도구 및 시스템 프롬프트 설정)"
+                )
                 self.agent = create_react_agent(
                     llm,
                     self.tools,
@@ -79,7 +83,9 @@ class USFinancialAnalyzerNode(Node):
 
             # 사용자 메시지 추출
             user_message = state["messages"][-1].content
-            safe_message = user_message[:100] + "..." if len(user_message) > 100 else user_message
+            safe_message = (
+                user_message[:100] + "..." if len(user_message) > 100 else user_message
+            )
             self.logger.info(f"사용자 쿼리 처리 중: '{safe_message}'")
 
             # Extract ticker symbol
@@ -91,7 +97,6 @@ class USFinancialAnalyzerNode(Node):
                 self.logger.info(f"티커 추출 결과: {extracted_ticker}")
                 self.logger.info(f"티커 추출 성공 여부: {ticker_extraction_success}")
             except Exception as e:
-
                 ticker_extraction_success = False
                 extracted_ticker = None
                 error_msg = f"티커 추출 실패: {str(e)}"
@@ -110,10 +115,18 @@ class USFinancialAnalyzerNode(Node):
                 analysis_text = result["messages"][-1].content
 
                 # Truncate log output to prevent overwhelming logs
-                log_analysis_preview = analysis_text[:200] + "..." if len(analysis_text) > 200 else analysis_text
+                log_analysis_preview = (
+                    analysis_text[:200] + "..."
+                    if len(analysis_text) > 200
+                    else analysis_text
+                )
                 agent_end_time = self._get_current_time()
-                self.logger.info(f"금융 분석 완료, 결과 미리보기: \n{log_analysis_preview}")
-                self.logger.debug(f"에이전트 실행 시간: {agent_start_time} ~ {agent_end_time}")
+                self.logger.info(
+                    f"금융 분석 완료, 결과 미리보기: \n{log_analysis_preview}"
+                )
+                self.logger.debug(
+                    f"에이전트 실행 시간: {agent_start_time} ~ {agent_end_time}"
+                )
 
             except Exception as e:
                 error_msg = f"에이전트 실행 실패: {str(e)}"
@@ -179,7 +192,9 @@ class USFinancialAnalyzerNode(Node):
             if not hasattr(self.tools[0], "llm") or self.tools[0].llm is None:
                 default_llm = ChatOpenAI(model=self.DEFAULT_LLM_MODEL)
                 self.tools[0].llm = default_llm
-                self.logger.debug(f"금융 도구에 기본 LLM 설정: {self.DEFAULT_LLM_MODEL}")
+                self.logger.debug(
+                    f"금융 도구에 기본 LLM 설정: {self.DEFAULT_LLM_MODEL}"
+                )
 
             # Execute agent
             self.logger.debug("직접 쿼리로 에이전트 실행 중")
@@ -189,7 +204,9 @@ class USFinancialAnalyzerNode(Node):
             response_content = result["messages"][-1].content
 
             agent_end_time = self._get_current_time()
-            self.logger.info(f"직접 호출 완료: {agent_start_time} ~ {agent_end_time}, 응답 길이: {len(response_content)}")
+            self.logger.info(
+                f"직접 호출 완료: {agent_start_time} ~ {agent_end_time}, 응답 길이: {len(response_content)}"
+            )
 
             response = RawResponse(answer=response_content)
 
