@@ -1,18 +1,16 @@
+import sys
 import unittest
 from unittest.mock import patch, MagicMock
 from dotenv import load_dotenv
+from src.graph.nodes.us_financial import USFinancialAnalyzerNode
+from src.tools.us_stock.tool import USFinancialStatementTool
+from langchain_core.messages import HumanMessage, AIMessage
 
 # Load .env file
 load_dotenv()
 
 # Set path
-import sys
-
 sys.path.append("..")  # Add parent directory
-
-from src.graph.nodes.us_financial import USFinancialAnalyzerNode
-from src.tools.us_stock.tool import USFinancialStatementTool
-from langchain_core.messages import HumanMessage, AIMessage
 
 
 class TestUSFinancialNode(unittest.TestCase):
@@ -185,7 +183,7 @@ class TestUSFinancialNode(unittest.TestCase):
 
         # We need to mock the tool's _extract_ticker to handle Korean text
         with patch.object(
-            USFinancialStatementTool, "_extract_ticker", return_value="AAPL"
+                USFinancialStatementTool, "_extract_ticker", return_value="AAPL"
         ):
             # Execute node
             self.node.agent = mock_agent
