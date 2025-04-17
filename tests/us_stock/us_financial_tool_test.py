@@ -1,17 +1,15 @@
+import sys
 import unittest
 from unittest.mock import patch, MagicMock
 from dotenv import load_dotenv
+from src.tools.us_stock.tool import USFinancialStatementTool
+from src.graph.nodes.us_financial import USFinancialAnalyzerNode
 
 # Load .env file
 load_dotenv()
 
 # Set path
-import sys
-
 sys.path.append("..")  # Add parent directory
-
-from src.tools.us_stock.tool import USFinancialStatementTool
-from src.graph.nodes.us_financial import USFinancialAnalyzerNode
 
 
 class TestTickerExtraction(unittest.TestCase):

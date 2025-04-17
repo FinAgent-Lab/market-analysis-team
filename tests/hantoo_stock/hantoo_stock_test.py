@@ -1,17 +1,15 @@
+import os
+import sys
 import unittest
 from unittest.mock import patch, MagicMock
-import os
 from dotenv import load_dotenv
+from src.tools.hantoo_stock.hantoo_stock import HantooStockAPIWrapper
 
 # .env 파일 로드
 load_dotenv()
 
 # 경로 설정
-import sys
-
 sys.path.append("..")  # 상위 디렉토리 추가
-
-from src.tools.hantoo_stock.hantoo_stock import HantooStockAPIWrapper
 
 
 class TestHantooStockAPI(unittest.TestCase):
@@ -21,7 +19,7 @@ class TestHantooStockAPI(unittest.TestCase):
         """테스트 설정"""
         # API 키가 환경변수에 설정되어 있는지 확인
         self.api_key_exists = (
-            "HANTOO_APP_KEY" in os.environ and "HANTOO_APP_SECRET" in os.environ
+                "HANTOO_APP_KEY" in os.environ and "HANTOO_APP_SECRET" in os.environ
         )
 
         if self.api_key_exists:

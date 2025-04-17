@@ -1,7 +1,7 @@
 """Util that calls Alpha Vantage API."""
 
 import time
-from typing import Dict
+from typing import Dict, Optional, Any
 import requests
 
 from langchain_core.utils import get_from_dict_or_env
@@ -29,6 +29,40 @@ class AlphaVantageAPIWrapper(BaseModel):
         values["api_key"] = api_key
         return values
 
+    def safe_float_or_empty(self, value: Any) -> Optional[float]:
+        """
+        Convert string value to float.
+        Return None when conversion is not possible.
+        """
+        if value is None or value == 'None' or value == '' or (isinstance(value, str) and value.strip().lower() == 'none'):
+            return None
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return None
+
+    def format_financial_value(self, value: Any, include_dollar: bool = True, include_percent: bool = False) -> str:
+        """
+        Format financial values.
+        Return 'No data' for None values.
+        """
+        if value is None:
+            return "No data"
+
+        try:
+            float_value = self.safe_float_or_empty(value)
+            if float_value is None:
+                return "No data"
+
+            if include_percent:
+                return f"{float_value * 100:.2f}%"
+            elif include_dollar:
+                return f"${float_value:,.2f}"
+            else:
+                return f"{float_value:,.2f}"
+        except (ValueError, TypeError):
+            return "No data"
+
     def _get_cached_or_fetch(self, endpoint: str, func, *args, **kwargs) -> Dict:
         """Get data from cache or fetch from API."""
         cache_key = endpoint
@@ -36,9 +70,9 @@ class AlphaVantageAPIWrapper(BaseModel):
 
         # Return from cache if available and not expired
         if (
-            cache_key in self.cache
-            and current_time - self.cache_timestamp.get(cache_key, 0)
-            < self.base_cache_time
+                cache_key in self.cache
+                and current_time - self.cache_timestamp.get(cache_key, 0)
+                < self.base_cache_time
         ):
             return self.cache[cache_key]
 
@@ -210,88 +244,105 @@ class AlphaVantageAPIWrapper(BaseModel):
                 if "Industry" in profile:
                     analysis["industry"] = profile["Industry"]
                 if "MarketCapitalization" in profile:
-                    analysis["market_cap"] = (
-                        f"${float(profile['MarketCapitalization']):,.2f}"
-                    )
+                    market_cap = self.safe_float_or_empty(profile['MarketCapitalization'])
+                    analysis["market_cap"] = self.format_financial_value(market_cap)
                 if "FullTimeEmployees" in profile:
-                    analysis["employees"] = f"{profile['FullTimeEmployees']}"
+                    analysis["employees"] = profile['FullTimeEmployees'] if profile['FullTimeEmployees'] else "No data"
 
                 # Basic financials from overview
                 if "EPS" in profile:
-                    analysis["eps"] = f"${float(profile['EPS']):,.2f}"
+                    eps = self.safe_float_or_empty(profile['EPS'])
+                    analysis["eps"] = self.format_financial_value(eps)
                 if "PERatio" in profile:
-                    analysis["pe_ratio"] = f"{float(profile['PERatio']):,.2f}"
+                    pe_ratio = self.safe_float_or_empty(profile['PERatio'])
+                    analysis["pe_ratio"] = self.format_financial_value(pe_ratio, include_dollar=False)
                 if "PEGRatio" in profile:
-                    analysis["peg_ratio"] = f"{float(profile['PEGRatio']):,.2f}"
+                    peg_ratio = self.safe_float_or_empty(profile['PEGRatio'])
+                    analysis["peg_ratio"] = self.format_financial_value(peg_ratio, include_dollar=False)
                 if "DividendYield" in profile:
-                    analysis["dividend_yield"] = (
-                        f"{float(profile['DividendYield']) * 100:,.2f}%"
-                    )
+                    div_yield = self.safe_float_or_empty(profile['DividendYield'])
+                    if div_yield is not None:
+                        analysis["dividend_yield"] = self.format_financial_value(div_yield * 100, include_dollar=False, include_percent=True)
+                    else:
+                        analysis["dividend_yield"] = "No data"
                 if "PriceToBookRatio" in profile:
-                    analysis["pb_ratio"] = f"{float(profile['PriceToBookRatio']):,.2f}"
+                    pb_ratio = self.safe_float_or_empty(profile['PriceToBookRatio'])
+                    analysis["pb_ratio"] = self.format_financial_value(pb_ratio, include_dollar=False)
                 if "ReturnOnEquityTTM" in profile:
-                    roe = float(profile["ReturnOnEquityTTM"]) * 100
-                    analysis["roe"] = f"{roe:,.2f}%"
-                    if roe > 15:
-                        analysis["roe_evaluation"] = "Excellent ROE"
-                    elif roe > 10:
-                        analysis["roe_evaluation"] = "Good ROE"
-                    elif roe > 5:
-                        analysis["roe_evaluation"] = "Average ROE"
+                    roe = self.safe_float_or_empty(profile['ReturnOnEquityTTM'])
+                    if roe is not None:
+                        roe_value = roe * 100
+                        analysis["roe"] = self.format_financial_value(roe_value, include_dollar=False, include_percent=True)
+                        if roe_value > 15:
+                            analysis["roe_evaluation"] = "Excellent ROE"
+                        elif roe_value > 10:
+                            analysis["roe_evaluation"] = "Good ROE"
+                        elif roe_value > 5:
+                            analysis["roe_evaluation"] = "Average ROE"
+                        else:
+                            analysis["roe_evaluation"] = "Below average ROE"
                     else:
-                        analysis["roe_evaluation"] = "Below average ROE"
+                        analysis["roe"] = "No data"
+                        analysis["roe_evaluation"] = "Unable to evaluate due to insufficient data"
                 if "ReturnOnAssetsTTM" in profile:
-                    analysis["roa"] = (
-                        f"{float(profile['ReturnOnAssetsTTM']) * 100:,.2f}%"
-                    )
-                if "OperatingMarginTTM" in profile:
-                    op_margin = float(profile["OperatingMarginTTM"]) * 100
-                    analysis["operating_margin"] = f"{op_margin:,.2f}%"
-                    if op_margin > 15:
-                        analysis["profitability_evaluation"] = "Excellent profitability"
-                    elif op_margin > 10:
-                        analysis["profitability_evaluation"] = "Good profitability"
-                    elif op_margin > 5:
-                        analysis["profitability_evaluation"] = "Average profitability"
+                    roa = self.safe_float_or_empty(profile['ReturnOnAssetsTTM'])
+                    if roa is not None:
+                        analysis["roa"] = self.format_financial_value(roa * 100, include_dollar=False, include_percent=True)
                     else:
-                        analysis["profitability_evaluation"] = (
-                            "Below average profitability"
-                        )
+                        analysis["roa"] = "No data"
+                if "OperatingMarginTTM" in profile:
+                    op_margin = self.safe_float_or_empty(profile['OperatingMarginTTM'])
+                    if op_margin is not None:
+                        op_margin_value = op_margin * 100
+                        analysis["operating_margin"] = self.format_financial_value(op_margin_value, include_dollar=False, include_percent=True)
+                        if op_margin_value > 15:
+                            analysis["profitability_evaluation"] = "Excellent profitability"
+                        elif op_margin_value > 10:
+                            analysis["profitability_evaluation"] = "Good profitability"
+                        elif op_margin_value > 5:
+                            analysis["profitability_evaluation"] = "Average profitability"
+                        else:
+                            analysis["profitability_evaluation"] = "Below average profitability"
+                    else:
+                        analysis["operating_margin"] = "No data"
+                        analysis["profitability_evaluation"] = "Unable to evaluate due to insufficient data"
                 if "ProfitMargin" in profile:
-                    analysis["profit_margin"] = (
-                        f"{float(profile['ProfitMargin']) * 100:,.2f}%"
-                    )
+                    profit_margin = self.safe_float_or_empty(profile['ProfitMargin'])
+                    if profit_margin is not None:
+                        analysis["profit_margin"] = self.format_financial_value(profit_margin * 100, include_dollar=False, include_percent=True)
+                    else:
+                        analysis["profit_margin"] = "No data"
             except Exception as e:
                 analysis["profile_analysis_error"] = str(e)
 
         # Balance sheet analysis
         balance_sheet_data = data.get("balance_sheet", {})
         if (
-            balance_sheet_data
-            and "annualReports" in balance_sheet_data
-            and len(balance_sheet_data["annualReports"]) > 0
+                balance_sheet_data
+                and "annualReports" in balance_sheet_data
+                and len(balance_sheet_data["annualReports"]) > 0
         ):
             try:
                 recent = balance_sheet_data["annualReports"][0]
 
-                # Extract basic metrics
-                total_assets = float(recent.get("totalAssets", 0))
-                total_liabilities = float(recent.get("totalLiabilities", 0))
-                total_equity = float(recent.get("totalShareholderEquity", 0))
+                # Extract basic metrics - safely convert values
+                total_assets = self.safe_float_or_empty(recent.get("totalAssets"))
+                total_liabilities = self.safe_float_or_empty(recent.get("totalLiabilities"))
+                total_equity = self.safe_float_or_empty(recent.get("totalShareholderEquity"))
 
                 # Add basic metrics
-                analysis["total_assets"] = f"${total_assets:,.2f}"
-                analysis["total_liabilities"] = f"${total_liabilities:,.2f}"
-                analysis["total_equity"] = f"${total_equity:,.2f}"
+                analysis["total_assets"] = self.format_financial_value(total_assets)
+                analysis["total_liabilities"] = self.format_financial_value(total_liabilities)
+                analysis["total_equity"] = self.format_financial_value(total_equity)
 
                 # Liquidity analysis
-                current_assets = float(recent.get("totalCurrentAssets", 0))
-                current_liabilities = float(recent.get("totalCurrentLiabilities", 0))
+                current_assets = self.safe_float_or_empty(recent.get("totalCurrentAssets"))
+                current_liabilities = self.safe_float_or_empty(recent.get("totalCurrentLiabilities"))
 
-                analysis["current_assets"] = f"${current_assets:,.2f}"
-                analysis["current_liabilities"] = f"${current_liabilities:,.2f}"
+                analysis["current_assets"] = self.format_financial_value(current_assets)
+                analysis["current_liabilities"] = self.format_financial_value(current_liabilities)
 
-                if current_liabilities > 0:
+                if current_liabilities is not None and current_assets is not None and current_liabilities > 0:
                     current_ratio = current_assets / current_liabilities
                     analysis["current_ratio"] = f"{current_ratio:.2f}"
 
@@ -303,9 +354,12 @@ class AlphaVantageAPIWrapper(BaseModel):
                         analysis["liquidity_evaluation"] = "Adequate liquidity"
                     else:
                         analysis["liquidity_evaluation"] = "Potential liquidity risk"
+                else:
+                    analysis["current_ratio"] = "No data"
+                    analysis["liquidity_evaluation"] = "Unable to evaluate due to insufficient data"
 
                 # Debt ratio
-                if total_equity > 0:
+                if total_equity is not None and total_liabilities is not None and total_equity > 0:
                     debt_to_equity = (total_liabilities / total_equity) * 100
                     analysis["debt_to_equity"] = f"{debt_to_equity:.2f}%"
 
@@ -317,40 +371,43 @@ class AlphaVantageAPIWrapper(BaseModel):
                         analysis["debt_evaluation"] = "High debt (aggressive)"
                     else:
                         analysis["debt_evaluation"] = "Very high debt (risky)"
+                else:
+                    analysis["debt_to_equity"] = "No data"
+                    analysis["debt_evaluation"] = "Unable to evaluate due to insufficient data"
             except Exception as e:
                 analysis["balance_sheet_analysis_error"] = str(e)
 
         # Income statement analysis
         income_statement_data = data.get("income_statement", {})
         if (
-            income_statement_data
-            and "annualReports" in income_statement_data
-            and len(income_statement_data["annualReports"]) >= 2
+                income_statement_data
+                and "annualReports" in income_statement_data
+                and len(income_statement_data["annualReports"]) >= 2
         ):
             try:
                 recent = income_statement_data["annualReports"][0]
                 previous = income_statement_data["annualReports"][1]
 
-                # Extract metrics
-                recent_revenue = float(recent.get("totalRevenue", 0))
-                recent_gross_profit = float(recent.get("grossProfit", 0))
-                recent_operating_income = float(recent.get("operatingIncome", 0))
-                recent_net_income = float(recent.get("netIncome", 0))
+                # Extract metrics - safely convert values
+                recent_revenue = self.safe_float_or_empty(recent.get("totalRevenue"))
+                recent_gross_profit = self.safe_float_or_empty(recent.get("grossProfit"))
+                recent_operating_income = self.safe_float_or_empty(recent.get("operatingIncome"))
+                recent_net_income = self.safe_float_or_empty(recent.get("netIncome"))
 
-                previous_revenue = float(previous.get("totalRevenue", 0))
-                previous_net_income = float(previous.get("netIncome", 0))
+                previous_revenue = self.safe_float_or_empty(previous.get("totalRevenue"))
+                previous_net_income = self.safe_float_or_empty(previous.get("netIncome"))
 
                 # Add basic metrics
-                analysis["recent_revenue"] = f"${recent_revenue:,.2f}"
-                analysis["recent_gross_profit"] = f"${recent_gross_profit:,.2f}"
-                analysis["recent_operating_income"] = f"${recent_operating_income:,.2f}"
-                analysis["recent_net_income"] = f"${recent_net_income:,.2f}"
+                analysis["recent_revenue"] = self.format_financial_value(recent_revenue)
+                analysis["recent_gross_profit"] = self.format_financial_value(recent_gross_profit)
+                analysis["recent_operating_income"] = self.format_financial_value(recent_operating_income)
+                analysis["recent_net_income"] = self.format_financial_value(recent_net_income)
 
-                # Growth rates
-                if previous_revenue > 0:
+                # Growth rates - calculate only if data is available
+                if previous_revenue is not None and recent_revenue is not None and previous_revenue > 0:
                     revenue_growth = (
-                        (recent_revenue - previous_revenue) / previous_revenue
-                    ) * 100
+                                             (recent_revenue - previous_revenue) / previous_revenue
+                                     ) * 100
                     analysis["revenue_growth"] = f"{revenue_growth:.2f}%"
 
                     if revenue_growth > 20:
@@ -361,40 +418,55 @@ class AlphaVantageAPIWrapper(BaseModel):
                         analysis["revenue_growth_evaluation"] = "Modest revenue growth"
                     else:
                         analysis["revenue_growth_evaluation"] = "Declining revenue"
+                else:
+                    analysis["revenue_growth"] = "No data"
+                    analysis["revenue_growth_evaluation"] = "Unable to evaluate due to insufficient data"
 
-                # Profitability
-                if recent_revenue > 0:
-                    gross_margin = (recent_gross_profit / recent_revenue) * 100
-                    operating_margin = (recent_operating_income / recent_revenue) * 100
-                    net_margin = (recent_net_income / recent_revenue) * 100
+                # Profitability - calculate only if data is available
+                if recent_revenue is not None and recent_revenue > 0:
+                    if recent_gross_profit is not None:
+                        gross_margin = (recent_gross_profit / recent_revenue) * 100
+                        analysis["gross_margin"] = f"{gross_margin:.2f}%"
+                    else:
+                        analysis["gross_margin"] = "No data"
 
-                    analysis["gross_margin"] = f"{gross_margin:.2f}%"
-                    if (
-                        "operating_margin" not in analysis
-                    ):  # Only add if not already added from profile
-                        analysis["operating_margin"] = f"{operating_margin:.2f}%"
-                        if operating_margin > 15:
-                            analysis["profitability_evaluation"] = (
-                                "Excellent profitability"
-                            )
-                        elif operating_margin > 10:
-                            analysis["profitability_evaluation"] = "Good profitability"
-                        elif operating_margin > 5:
-                            analysis["profitability_evaluation"] = (
-                                "Average profitability"
-                            )
-                        else:
-                            analysis["profitability_evaluation"] = (
-                                "Below average profitability"
-                            )
-                    analysis["net_margin"] = f"{net_margin:.2f}%"
+                    if recent_operating_income is not None:
+                        operating_margin = (recent_operating_income / recent_revenue) * 100
+                        if "operating_margin" not in analysis:  # Only add if not already added from profile
+                            analysis["operating_margin"] = f"{operating_margin:.2f}%"
+                            if operating_margin > 15:
+                                analysis["profitability_evaluation"] = "Excellent profitability"
+                            elif operating_margin > 10:
+                                analysis["profitability_evaluation"] = "Good profitability"
+                            elif operating_margin > 5:
+                                analysis["profitability_evaluation"] = "Average profitability"
+                            else:
+                                analysis["profitability_evaluation"] = "Below average profitability"
+                    else:
+                        if "operating_margin" not in analysis:
+                            analysis["operating_margin"] = "No data"
+                            analysis["profitability_evaluation"] = "Unable to evaluate due to insufficient data"
 
-                # Net income growth
-                if previous_net_income > 0:
+                    if recent_net_income is not None:
+                        net_margin = (recent_net_income / recent_revenue) * 100
+                        analysis["net_margin"] = f"{net_margin:.2f}%"
+                    else:
+                        analysis["net_margin"] = "No data"
+                else:
+                    analysis["gross_margin"] = "No data"
+                    if "operating_margin" not in analysis:
+                        analysis["operating_margin"] = "No data"
+                        analysis["profitability_evaluation"] = "Unable to evaluate due to insufficient data"
+                    analysis["net_margin"] = "No data"
+
+                # Net income growth - calculate only if data is available
+                if previous_net_income is not None and recent_net_income is not None and previous_net_income > 0:
                     net_income_growth = (
-                        (recent_net_income - previous_net_income) / previous_net_income
-                    ) * 100
+                                                (recent_net_income - previous_net_income) / previous_net_income
+                                        ) * 100
                     analysis["net_income_growth"] = f"{net_income_growth:.2f}%"
+                else:
+                    analysis["net_income_growth"] = "No data"
             except Exception as e:
                 analysis["income_statement_analysis_error"] = str(e)
 

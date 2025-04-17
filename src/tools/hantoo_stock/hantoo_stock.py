@@ -281,7 +281,6 @@ class HantooStockAPIWrapper(BaseModel):
                 recent_net_income = float(recent.get("thtr_ntin", 0))
 
                 previous_sales = float(previous.get("sale_account", 0))
-                previous_op_profit = float(previous.get("bsop_prti", 0))
                 previous_net_income = float(previous.get("thtr_ntin", 0))
 
                 # Add basic metrics
