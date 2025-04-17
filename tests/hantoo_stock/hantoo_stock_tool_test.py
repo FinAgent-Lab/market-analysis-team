@@ -1,17 +1,15 @@
+import sys
 import unittest
 from unittest.mock import patch
 from dotenv import load_dotenv
+from src.tools.hantoo_stock.tool import HantooFinancialStatementTool
+from src.tools.hantoo_stock.hantoo_stock import HantooStockAPIWrapper
 
 # .env 파일 로드
 load_dotenv()
 
 # 경로 설정
-import sys
-
 sys.path.append("..")  # 상위 디렉토리 추가
-
-from src.tools.hantoo_stock.tool import HantooFinancialStatementTool
-from src.tools.hantoo_stock.hantoo_stock import HantooStockAPIWrapper
 
 
 class TestHantooStockTool(unittest.TestCase):
