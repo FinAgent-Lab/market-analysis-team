@@ -1,6 +1,6 @@
 """Tool for the Alpha Vantage financial statements analysis."""
 
-from typing import Dict, Optional, Type, Union
+from typing import Dict, Optional, Type, Union, Any
 
 from langchain_core.callbacks import (
     CallbackManagerForToolRun,
@@ -31,7 +31,7 @@ class USFinancialStatementTool(BaseTool):
     args_schema: Type[BaseModel] = USStockInput
     api_wrapper: AlphaVantageAPIWrapper = Field(default_factory=AlphaVantageAPIWrapper)
 
-    # llm 속성을 private로 설정하여 Pydantic 검증에서 제외
+    # Set llm property as private to exclude from Pydantic validation
     _llm = None
 
     @property
@@ -42,13 +42,30 @@ class USFinancialStatementTool(BaseTool):
     def llm(self, value):
         self._llm = value
 
+    def safe_format(self, value: Any, prefix: str = "", suffix: str = "", decimal_places: int = 2) -> str:
+        """
+        Safely format financial values.
+        Returns 'No data' for None or 'None' values.
+        """
+        if value is None or value == "" or value == "None" or (isinstance(value, str) and value.strip().lower() == 'none'):
+            return "No data"
+        try:
+            float_val = self.api_wrapper.safe_float_or_empty(value)
+            if float_val is None:
+                return "No data"
+
+            formatted = f"{float_val:,.{decimal_places}f}"
+            return f"{prefix}{formatted}{suffix}"
+        except (ValueError, TypeError):
+            return "No data"
+
     def _extract_ticker(self, query: str) -> Optional[str]:
         """Extract ticker from query using LLM inference and validate with Alpha Vantage API."""
-        # LLM이 없으면 None 반환
+        # Return None if no LLM is available
         if self.llm is None:
             return None
 
-        # LLM에게 회사 이름을 티커로 변환하도록 요청
+        # Ask LLM to convert company name to ticker
         prompt = f"""
         Identify the US stock market ticker symbol for the company mentioned in this query:
         "{query}"
@@ -63,22 +80,22 @@ class USFinancialStatementTool(BaseTool):
         """
 
         try:
-            # LLM에 질의
-            response = self.llm.predict(prompt).strip().upper()
+            # Query LLM - use .invoke instead of .predict
+            response = self.llm.invoke(prompt).content.strip().upper()
 
-            # 응답이 유효한 티커 형식인지 확인 (1-5개의 대문자)
+            # Check if response is a valid ticker format (1-5 uppercase letters)
             import re
 
             if response != "UNKNOWN" and re.match(r"^[A-Z]{1,5}$", response):
-                # Alpha Vantage API를 통해 실제 존재하는지 확인
+                # Verify ticker exists via Alpha Vantage API
                 try:
                     result = self.api_wrapper.get_company_overview(response)
                     if "error" not in result:
                         return response
                 except Exception as e:
                     print(f"Error verifying ticker with Alpha Vantage: {e}")
-                    # API 검증에 실패해도 일단 티커 형식이 맞으면 반환 (선택적)
-                    # return response
+                    # Return the ticker if it has the right format, even if API verification fails (optional)
+                    return response
 
             return None
         except Exception as e:
@@ -86,9 +103,9 @@ class USFinancialStatementTool(BaseTool):
             return None
 
     def _run(
-        self,
-        query: str,
-        run_manager: Optional[CallbackManagerForToolRun] = None,
+            self,
+            query: str,
+            run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> Union[Dict, str]:
         """Run the tool."""
         try:
@@ -122,26 +139,38 @@ class USFinancialStatementTool(BaseTool):
         profile = analysis_data.get("profile", {})
         if profile:
             output.append("\n## Company Profile")
-            if "Sector" in profile:
+            # Always check if keys exist and have values
+            if "Sector" in profile and profile["Sector"]:
                 output.append(f"- Sector: {profile['Sector']}")
-            if "Industry" in profile:
+            if "Industry" in profile and profile["Industry"]:
                 output.append(f"- Industry: {profile['Industry']}")
-            if "Description" in profile:
+            if "Description" in profile and profile["Description"]:
                 output.append(f"- Description: {profile['Description'][:300]}...")
+
+            # Always use safe_format
             if "MarketCapitalization" in profile:
                 output.append(
-                    f"- Market Cap: ${float(profile['MarketCapitalization']):,.2f}"
+                    f"- Market Cap: {self.safe_format(profile['MarketCapitalization'], prefix='$')}"
                 )
-            if "FullTimeEmployees" in profile and profile["FullTimeEmployees"]:
-                output.append(f"- Employees: {profile['FullTimeEmployees']}")
-            if "DividendYield" in profile and profile["DividendYield"]:
-                output.append(
-                    f"- Dividend Yield: {float(profile['DividendYield']) * 100:.2f}%"
-                )
+            if "FullTimeEmployees" in profile:
+                employees = profile.get("FullTimeEmployees")
+                output.append(f"- Employees: {employees if employees else 'No data'}")
+
+            # Always check for existence and use safe_format
+            if "DividendYield" in profile:
+                div_yield = self.api_wrapper.safe_float_or_empty(profile['DividendYield'])
+                if div_yield is not None:
+                    output.append(
+                        f"- Dividend Yield: {self.safe_format(div_yield * 100, suffix='%')}"
+                    )
+                else:
+                    output.append("- Dividend Yield: No data")
+
+            # Always use safe_format
             if "52WeekHigh" in profile and "52WeekLow" in profile:
-                output.append(
-                    f"- 52-Week Range: ${float(profile['52WeekLow']):.2f} - ${float(profile['52WeekHigh']):.2f}"
-                )
+                high = self.safe_format(profile['52WeekHigh'], prefix='$')
+                low = self.safe_format(profile['52WeekLow'], prefix='$')
+                output.append(f"- 52-Week Range: {low} - {high}")
 
         # Balance sheet information
         balance_sheet = analysis_data.get("balance_sheet", {}).get("annualReports", [])
@@ -152,29 +181,29 @@ class USFinancialStatementTool(BaseTool):
             output.append(f"Reference Period: {period}")
 
             if "totalAssets" in recent:
-                output.append(f"- Total Assets: ${float(recent['totalAssets']):,.2f}")
+                output.append(f"- Total Assets: {self.safe_format(recent['totalAssets'], prefix='$')}")
             if "totalCurrentAssets" in recent:
                 output.append(
-                    f"- Current Assets: ${float(recent['totalCurrentAssets']):,.2f}"
+                    f"- Current Assets: {self.safe_format(recent['totalCurrentAssets'], prefix='$')}"
                 )
             if "totalLiabilities" in recent:
                 output.append(
-                    f"- Total Liabilities: ${float(recent['totalLiabilities']):,.2f}"
+                    f"- Total Liabilities: {self.safe_format(recent['totalLiabilities'], prefix='$')}"
                 )
             if "totalCurrentLiabilities" in recent:
                 output.append(
-                    f"- Current Liabilities: ${float(recent['totalCurrentLiabilities']):,.2f}"
+                    f"- Current Liabilities: {self.safe_format(recent['totalCurrentLiabilities'], prefix='$')}"
                 )
             if "totalShareholderEquity" in recent:
                 output.append(
-                    f"- Total Shareholder Equity: ${float(recent['totalShareholderEquity']):,.2f}"
+                    f"- Total Shareholder Equity: {self.safe_format(recent['totalShareholderEquity'], prefix='$')}"
                 )
             if "longTermDebt" in recent:
                 output.append(
-                    f"- Long-Term Debt: ${float(recent['longTermDebt']):,.2f}"
+                    f"- Long-Term Debt: {self.safe_format(recent['longTermDebt'], prefix='$')}"
                 )
             if "cash" in recent:
-                output.append(f"- Cash and Equivalents: ${float(recent['cash']):,.2f}")
+                output.append(f"- Cash and Equivalents: {self.safe_format(recent['cash'], prefix='$')}")
 
         # Income statement information
         income_statement = analysis_data.get("income_statement", {}).get(
@@ -187,25 +216,25 @@ class USFinancialStatementTool(BaseTool):
             output.append(f"Reference Period: {period}")
 
             if "totalRevenue" in recent:
-                output.append(f"- Total Revenue: ${float(recent['totalRevenue']):,.2f}")
+                output.append(f"- Total Revenue: {self.safe_format(recent['totalRevenue'], prefix='$')}")
             if "costOfRevenue" in recent:
                 output.append(
-                    f"- Cost of Revenue: ${float(recent['costOfRevenue']):,.2f}"
+                    f"- Cost of Revenue: {self.safe_format(recent['costOfRevenue'], prefix='$')}"
                 )
             if "grossProfit" in recent:
-                output.append(f"- Gross Profit: ${float(recent['grossProfit']):,.2f}")
+                output.append(f"- Gross Profit: {self.safe_format(recent['grossProfit'], prefix='$')}")
             if "operatingExpenses" in recent:
                 output.append(
-                    f"- Operating Expenses: ${float(recent['operatingExpenses']):,.2f}"
+                    f"- Operating Expenses: {self.safe_format(recent['operatingExpenses'], prefix='$')}"
                 )
             if "operatingIncome" in recent:
                 output.append(
-                    f"- Operating Income: ${float(recent['operatingIncome']):,.2f}"
+                    f"- Operating Income: {self.safe_format(recent['operatingIncome'], prefix='$')}"
                 )
             if "netIncome" in recent:
-                output.append(f"- Net Income: ${float(recent['netIncome']):,.2f}")
+                output.append(f"- Net Income: {self.safe_format(recent['netIncome'], prefix='$')}")
             if "ebitda" in recent:
-                output.append(f"- EBITDA: ${float(recent['ebitda']):,.2f}")
+                output.append(f"- EBITDA: {self.safe_format(recent['ebitda'], prefix='$')}")
 
         # Cash flow information
         cash_flow = analysis_data.get("cash_flow", {}).get("annualReports", [])
@@ -217,23 +246,24 @@ class USFinancialStatementTool(BaseTool):
 
             if "operatingCashflow" in recent:
                 output.append(
-                    f"- Operating Cash Flow: ${float(recent['operatingCashflow']):,.2f}"
+                    f"- Operating Cash Flow: {self.safe_format(recent['operatingCashflow'], prefix='$')}"
                 )
             if "cashflowFromInvestment" in recent:
                 output.append(
-                    f"- Cash Flow from Investment: ${float(recent['cashflowFromInvestment']):,.2f}"
+                    f"- Cash Flow from Investment: {self.safe_format(recent['cashflowFromInvestment'], prefix='$')}"
                 )
             if "cashflowFromFinancing" in recent:
                 output.append(
-                    f"- Cash Flow from Financing: ${float(recent['cashflowFromFinancing']):,.2f}"
+                    f"- Cash Flow from Financing: {self.safe_format(recent['cashflowFromFinancing'], prefix='$')}"
                 )
             if "capitalExpenditures" in recent:
                 output.append(
-                    f"- Capital Expenditures: ${float(recent['capitalExpenditures']):,.2f}"
+                    f"- Capital Expenditures: {self.safe_format(recent['capitalExpenditures'], prefix='$')}"
                 )
-            if "dividendPayout" in recent and float(recent["dividendPayout"]) > 0:
+            if "dividendPayout" in recent:
+                # Use safe_format to handle None values
                 output.append(
-                    f"- Dividend Payout: ${float(recent['dividendPayout']):,.2f}"
+                    f"- Dividend Payout: {self.safe_format(recent['dividendPayout'], prefix='$')}"
                 )
 
         # Financial ratios from profile
@@ -241,39 +271,70 @@ class USFinancialStatementTool(BaseTool):
             output.append("\n## Financial Ratios")
 
             if "PERatio" in profile:
-                output.append(f"- P/E Ratio: {float(profile['PERatio']):,.2f}")
+                output.append(f"- P/E Ratio: {self.safe_format(profile['PERatio'])}")
             if "PEGRatio" in profile:
-                output.append(f"- PEG Ratio: {float(profile['PEGRatio']):,.2f}")
+                output.append(f"- PEG Ratio: {self.safe_format(profile['PEGRatio'])}")
             if "PriceToBookRatio" in profile:
                 output.append(
-                    f"- Price to Book Ratio: {float(profile['PriceToBookRatio']):,.2f}"
+                    f"- Price to Book Ratio: {self.safe_format(profile['PriceToBookRatio'])}"
                 )
             if "EPS" in profile:
-                output.append(f"- EPS: ${float(profile['EPS']):,.2f}")
+                output.append(f"- EPS: {self.safe_format(profile['EPS'], prefix='$')}")
+
+            # Use safe_float_or_empty for conversion
             if "ReturnOnEquityTTM" in profile:
-                output.append(
-                    f"- Return on Equity (TTM): {float(profile['ReturnOnEquityTTM']) * 100:.2f}%"
-                )
+                roe = self.api_wrapper.safe_float_or_empty(profile['ReturnOnEquityTTM'])
+                if roe is not None:
+                    output.append(
+                        f"- Return on Equity (TTM): {self.safe_format(roe * 100, suffix='%')}"
+                    )
+                else:
+                    output.append("- Return on Equity (TTM): No data")
+
             if "ReturnOnAssetsTTM" in profile:
-                output.append(
-                    f"- Return on Assets (TTM): {float(profile['ReturnOnAssetsTTM']) * 100:.2f}%"
-                )
+                roa = self.api_wrapper.safe_float_or_empty(profile['ReturnOnAssetsTTM'])
+                if roa is not None:
+                    output.append(
+                        f"- Return on Assets (TTM): {self.safe_format(roa * 100, suffix='%')}"
+                    )
+                else:
+                    output.append("- Return on Assets (TTM): No data")
+
             if "OperatingMarginTTM" in profile:
-                output.append(
-                    f"- Operating Margin (TTM): {float(profile['OperatingMarginTTM']) * 100:.2f}%"
-                )
+                op_margin = self.api_wrapper.safe_float_or_empty(profile['OperatingMarginTTM'])
+                if op_margin is not None:
+                    output.append(
+                        f"- Operating Margin (TTM): {self.safe_format(op_margin * 100, suffix='%')}"
+                    )
+                else:
+                    output.append("- Operating Margin (TTM): No data")
+
             if "ProfitMargin" in profile:
-                output.append(
-                    f"- Profit Margin: {float(profile['ProfitMargin']) * 100:.2f}%"
-                )
+                profit_margin = self.api_wrapper.safe_float_or_empty(profile['ProfitMargin'])
+                if profit_margin is not None:
+                    output.append(
+                        f"- Profit Margin: {self.safe_format(profit_margin * 100, suffix='%')}"
+                    )
+                else:
+                    output.append("- Profit Margin: No data")
+
             if "QuarterlyEarningsGrowthYOY" in profile:
-                output.append(
-                    f"- Quarterly Earnings Growth (YOY): {float(profile['QuarterlyEarningsGrowthYOY']) * 100:.2f}%"
-                )
+                earnings_growth = self.api_wrapper.safe_float_or_empty(profile['QuarterlyEarningsGrowthYOY'])
+                if earnings_growth is not None:
+                    output.append(
+                        f"- Quarterly Earnings Growth (YOY): {self.safe_format(earnings_growth * 100, suffix='%')}"
+                    )
+                else:
+                    output.append("- Quarterly Earnings Growth (YOY): No data")
+
             if "QuarterlyRevenueGrowthYOY" in profile:
-                output.append(
-                    f"- Quarterly Revenue Growth (YOY): {float(profile['QuarterlyRevenueGrowthYOY']) * 100:.2f}%"
-                )
+                revenue_growth = self.api_wrapper.safe_float_or_empty(profile['QuarterlyRevenueGrowthYOY'])
+                if revenue_growth is not None:
+                    output.append(
+                        f"- Quarterly Revenue Growth (YOY): {self.safe_format(revenue_growth * 100, suffix='%')}"
+                    )
+                else:
+                    output.append("- Quarterly Revenue Growth (YOY): No data")
 
         # Analysis information
         analysis = analysis_data.get("analysis", {})
