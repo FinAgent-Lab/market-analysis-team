@@ -1,17 +1,15 @@
+import sys
 import unittest
 from unittest.mock import patch, MagicMock
 from dotenv import load_dotenv
+from src.graph.nodes.hantoo_financial import HantooFinancialAnalyzerNode
+from langchain_core.messages import HumanMessage, AIMessage
 
 # .env 파일 로드
 load_dotenv()
 
 # 경로 설정
-import sys
-
 sys.path.append("..")  # 상위 디렉토리 추가
-
-from src.graph.nodes.hantoo_financial import HantooFinancialAnalyzerNode
-from langchain_core.messages import HumanMessage, AIMessage
 
 
 class TestHantooFinancialNode(unittest.TestCase):
