@@ -23,6 +23,7 @@ from rich.console import Console
 
 from src.tasks.weekly_recap_scraper import scrape_jp_weekly_recap
 
+
 console = Console()
 load_dotenv(override=True)
 logger = setup_logger("market_agent")
@@ -74,8 +75,8 @@ def main(
     graph_builder.add_node(NewNode())
     """
 
-    # graph_builder.add_node(NaverNewsSearcherNode())
-    # graph_builder.add_node(GoogleSearcherNode())
+    graph_builder.add_node(NaverNewsSearcherNode())
+    graph_builder.add_node(GoogleSearcherNode())
     graph_builder.add_node(RetrieveESGNode())
     graph_builder.add_node(ReportAssistantNode())
     graph_builder.add_node(ChosunRSSFeederNode())
@@ -88,8 +89,8 @@ def main(
     # 미국 주식 분석 에이전트 노드 추가 (Alpha Vantage API 사용)
     # graph_builder.add_node(USFinancialAnalyzerNode())
 
-    # vector_store = Container.vector_store_recap()
-    # graph_builder.add_node(WeeklyReporterNode(vector_store))
+    vector_store = Container.vector_store_recap()
+    graph_builder.add_node(WeeklyReporterNode(vector_store))
 
     graph_builder.build()
 
@@ -103,15 +104,15 @@ def main(
             endpoint=node.invoke,
         )
 
-    # scheduler = BackgroundScheduler(daemon=True)
-    # scheduler.add_job(
-    #     scrape_jp_weekly_recap,
-    #     "cron",
-    #     hour="6,9,12,15,18",
-    #     minute=0,
-    #     args=[vector_store],
-    # )
-    # scheduler.start()
+    scheduler = BackgroundScheduler(daemon=True)
+    scheduler.add_job(
+        scrape_jp_weekly_recap,
+        "cron",
+        hour="6,9,12,15,18",
+        minute=0,
+        args=[vector_store],
+    )
+    scheduler.start()
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
 

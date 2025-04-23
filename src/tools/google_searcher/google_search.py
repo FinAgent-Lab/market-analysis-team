@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, SecretStr, model_validator
 
 GOOGLE_API_URL = "https://www.googleapis.com/customsearch/v1"
 
+
 class GoogleSearchAPIWrapper(BaseModel):
     """Wrapper for Google Custom Search API."""
 
@@ -32,9 +33,7 @@ class GoogleSearchAPIWrapper(BaseModel):
         google_api_key = get_from_dict_or_env(
             values, "google_api_key", "GOOGLE_API_KEY"
         )
-        google_cse_id = get_from_dict_or_env(
-            values, "google_cse_id", "GOOGLE_CSE_ID"
-        )
+        google_cse_id = get_from_dict_or_env(values, "google_cse_id", "GOOGLE_CSE_ID")
         values["google_api_key"] = google_api_key
         values["google_cse_id"] = google_cse_id
 

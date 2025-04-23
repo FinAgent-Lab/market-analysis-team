@@ -1,6 +1,6 @@
 """Tool for ESG data retrieval."""
 
-from typing import Optional, Type, Dict, Any, List
+from typing import Optional, Type, Dict, Any
 from langchain_core.callbacks import (
     AsyncCallbackManagerForToolRun,
     CallbackManagerForToolRun,

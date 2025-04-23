@@ -4,16 +4,11 @@ Retrieves ESG data for a given ticker from  yfinance API.
 Supports both synchronous and asynchronous methods.
 """
 
-import json
 import datetime
-from typing import Dict, List, Optional, Union, Any, Generator
-from contextlib import contextmanager
+from typing import Dict, Any
 
 import yfinance as yf
-from pydantic import BaseModel, Field, ConfigDict, model_validator
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
+from pydantic import BaseModel, ConfigDict
 
 # from core.db import get_async_session, get_sync_session
 # from model.esg_data import ESGData

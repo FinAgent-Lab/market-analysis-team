@@ -5,10 +5,7 @@ from langchain_core.messages import HumanMessage
 
 from src.graph.nodes.base import Node
 from src.models.do import RawResponse
-from src.tools.naver_searcher.tool import NaverNewsSearch
 from src.tools.retrieve_esg.tool import ESGDataTool
-
-from opik import track
 
 
 class RetrieveESGNode(Node):
