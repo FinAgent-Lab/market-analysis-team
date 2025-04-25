@@ -12,7 +12,6 @@ from src.graph.nodes import (
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
     GoogleSearcherNode,
-    USFinancialAnalyzerNode,
     WeeklyReporterNode,
 )
 from src.utils.logger import setup_logger
@@ -36,9 +35,9 @@ logo = """
 ██      ██ ██   ████ ██   ██  ██████  ███████ ██   ████    ██          ███████ ██   ██ ██████  
                                                                                                
 ----------------------------------------------------------------------------------------------
-                __  __          _       _                    _         _    
+                 __  __          _       _                    _         _    
                 |  \/  |__ _ _ _| |_____| |_   __ _ _ _  __ _| |_  _ __(_)___
-                | |\/| / _` | '_| / / -_)  _| / _` | ' \/ _` | | || (_-< (_-
+                | |\/| / _` | '_| / / -_)  _| / _` | ' \/ _` | | || (_-< (_-<
                 |_|  |_\__,_|_| |_\_\___|\__| \__,_|_||_\__,_|_|\_, /__/_/__/
                                                                 |__/         
 ----------------------------------------------------------------------------------------------
@@ -74,7 +73,7 @@ def main(
     """
 
     graph_builder.add_node(NaverNewsSearcherNode())
-    graph_builder.add_node(GoogleSearcherNode())
+    # graph_builder.add_node(GoogleSearcherNode())
     graph_builder.add_node(ReportAssistantNode())
     graph_builder.add_node(ChosunRSSFeederNode())
     graph_builder.add_node(WSJEconomyRSSFeederNode())
@@ -84,7 +83,7 @@ def main(
     # graph_builder.add_node(HantooFinancialAnalyzerNode())
 
     # 미국 주식 분석 에이전트 노드 추가 (Alpha Vantage API 사용)
-    graph_builder.add_node(USFinancialAnalyzerNode())
+    # graph_builder.add_node(USFinancialAnalyzerNode())
 
     vector_store = Container.vector_store_recap()
     graph_builder.add_node(WeeklyReporterNode(vector_store))

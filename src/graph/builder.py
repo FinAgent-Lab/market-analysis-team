@@ -41,8 +41,17 @@ class SupervisorGraphBuilder(BuilderABC):
 
         self._builder.add_node("supervisor", SupervisorNode())
         for node in self._node_list:
-            self._builder.add_node(node.__class__.__name__, node)
-        self.members = list(map(lambda x: x.__class__.__name__, self._node_list))
+            self._builder.add_node(node.__class__.__name__.lower(), node)
+            # self._builder.add_node(
+            #     node.__class__.__name__,
+            #     _make_call_agent(
+            #         node,
+            #         output_mode="full_history",
+            #         add_handoff_back_messages=True,
+            #         supervisor_name="supervisor",
+            #     ),
+            # )
+        self.members = list(map(lambda x: x.__class__.__name__.lower(), self._node_list))
 
         self._builder.add_edge(START, "supervisor")
 

@@ -183,7 +183,7 @@ class TestUSFinancialNode(unittest.TestCase):
 
         # We need to mock the tool's _extract_ticker to handle Korean text
         with patch.object(
-                USFinancialStatementTool, "_extract_ticker", return_value="AAPL"
+            USFinancialStatementTool, "_extract_ticker", return_value="AAPL"
         ):
             # Execute node
             self.node.agent = mock_agent

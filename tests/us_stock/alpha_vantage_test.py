@@ -177,7 +177,7 @@ class TestAlphaVantageAPI(unittest.TestCase):
     )
     @patch("src.tools.us_stock.alpha_vantage.AlphaVantageAPIWrapper.get_cash_flow")
     def test_analyze_financial_statements(
-            self, mock_cash_flow, mock_income, mock_balance, mock_overview
+        self, mock_cash_flow, mock_income, mock_balance, mock_overview
     ):
         """재무제표 분석 테스트"""
         # 각 메소드에 대한 목 응답 설정

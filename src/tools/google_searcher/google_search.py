@@ -14,9 +14,6 @@ from langchain_core.utils import get_from_dict_or_env
 from pydantic import BaseModel, ConfigDict, SecretStr, model_validator
 
 GOOGLE_API_URL = "https://www.googleapis.com/customsearch/v1"
-DEFAULT_API_KEY = "AIzaSyDr8bn7cbpxmlnNVTVDTbxO5ZWWz7RvUN4"
-DEFAULT_CSE_ID = "c4f4cb24f0be5401e"
-
 
 class GoogleSearchAPIWrapper(BaseModel):
     """Wrapper for Google Custom Search API."""
@@ -32,20 +29,12 @@ class GoogleSearchAPIWrapper(BaseModel):
     @classmethod
     def validate_environment(cls, values: Dict) -> Dict:
         """Validate that api key and cse id exist in environment."""
-        try:
-            google_api_key = get_from_dict_or_env(
-                values, "google_api_key", "GOOGLE_API_KEY"
-            )
-        except ValueError:
-            google_api_key = DEFAULT_API_KEY
-
-        try:
-            google_cse_id = get_from_dict_or_env(
-                values, "google_cse_id", "GOOGLE_CSE_ID"
-            )
-        except ValueError:
-            google_cse_id = DEFAULT_CSE_ID
-
+        google_api_key = get_from_dict_or_env(
+            values, "google_api_key", "GOOGLE_API_KEY"
+        )
+        google_cse_id = get_from_dict_or_env(
+            values, "google_cse_id", "GOOGLE_CSE_ID"
+        )
         values["google_api_key"] = google_api_key
         values["google_cse_id"] = google_cse_id
 
@@ -56,15 +45,8 @@ class GoogleSearchAPIWrapper(BaseModel):
         query: str,
     ) -> Dict:
         """Get raw results from the Google Custom Search API."""
-        try:
-            api_key = self.google_api_key.get_secret_value()
-        except ValueError:
-            api_key = DEFAULT_API_KEY
-
-        try:
-            cse_id = self.google_cse_id.get_secret_value()
-        except ValueError:
-            cse_id = DEFAULT_CSE_ID
+        api_key = self.google_api_key.get_secret_value()
+        cse_id = self.google_cse_id.get_secret_value()
 
         params = {"key": api_key, "cx": cse_id, "q": query}
 
@@ -104,15 +86,8 @@ class GoogleSearchAPIWrapper(BaseModel):
         query: str,
     ) -> Dict:
         """Get results from the Google Custom Search API asynchronously."""
-        try:
-            api_key = self.google_api_key.get_secret_value()
-        except ValueError:
-            api_key = DEFAULT_API_KEY
-
-        try:
-            cse_id = self.google_cse_id.get_secret_value()
-        except ValueError:
-            cse_id = DEFAULT_CSE_ID
+        api_key = self.google_api_key.get_secret_value()
+        cse_id = self.google_cse_id.get_secret_value()
 
         params = {"key": api_key, "cx": cse_id, "q": query}
 
