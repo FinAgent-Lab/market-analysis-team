@@ -1,6 +1,7 @@
 from typing import TypedDict, Annotated, Any
 
 from langgraph.graph import add_messages, MessagesState
+from langgraph.prebuilt.chat_agent_executor import AgentState
 
 """
 각 에이전트의 필요에 따른 State 결합은 mixin 방식을 사용하면 어떨지?
@@ -34,6 +35,6 @@ class SimpleState(TypedDict):
 
 
 # TODO: llm 모델은 DI 컨테이너를 통해서 받는게 나을지도(관리 편의성)
-class SupervisorState(MessagesState):
+class SupervisorState(AgentState):
     llm: Any
     members: list[str]
