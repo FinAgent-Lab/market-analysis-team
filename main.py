@@ -11,7 +11,6 @@ from src.graph.nodes import (
     ChosunRSSFeederNode,
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
-    GoogleSearcherNode,
     WeeklyReporterNode,
 )
 from src.utils.logger import setup_logger
