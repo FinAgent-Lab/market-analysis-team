@@ -4,7 +4,6 @@ from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 from langgraph.types import Command
 from langchain_core.messages import HumanMessage
-from langchain.prompts import ChatPromptTemplate
 from langchain_community.tools import ReadFileTool
 from src.graph.nodes.base import Node
 
