@@ -35,10 +35,10 @@ class AlphaVantageAPIWrapper(BaseModel):
         Return None when conversion is not possible.
         """
         if (
-                value is None
-                or value == "None"
-                or value == ""
-                or (isinstance(value, str) and value.strip().lower() == "none")
+            value is None
+            or value == "None"
+            or value == ""
+            or (isinstance(value, str) and value.strip().lower() == "none")
         ):
             return None
         try:
@@ -47,7 +47,7 @@ class AlphaVantageAPIWrapper(BaseModel):
             return None
 
     def format_financial_value(
-            self, value: Any, include_dollar: bool = True, include_percent: bool = False
+        self, value: Any, include_dollar: bool = True, include_percent: bool = False
     ) -> str:
         """
         Format financial values.
@@ -77,9 +77,9 @@ class AlphaVantageAPIWrapper(BaseModel):
 
         # Return from cache if available and not expired
         if (
-                cache_key in self.cache
-                and current_time - self.cache_timestamp.get(cache_key, 0)
-                < self.base_cache_time
+            cache_key in self.cache
+            and current_time - self.cache_timestamp.get(cache_key, 0)
+            < self.base_cache_time
         ):
             return self.cache[cache_key]
 
