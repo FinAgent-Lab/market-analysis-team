@@ -30,7 +30,6 @@ class ReportAssistantNode(Node):
         """
 
     def _run(self, state: dict) -> dict:
-
         if self.agent is None:
             llm = state["llm"]
             self.agent = create_react_agent(
@@ -38,7 +37,6 @@ class ReportAssistantNode(Node):
                 self.tools,
                 prompt=self.template_instruction,
             )
-
 
         result = self.agent.invoke(state)
         return Command(
