@@ -51,7 +51,9 @@ class SupervisorGraphBuilder(BuilderABC):
             #         supervisor_name="supervisor",
             #     ),
             # )
-        self.members = list(map(lambda x: x.__class__.__name__.lower(), self._node_list))
+        self.members = list(
+            map(lambda x: x.__class__.__name__.lower(), self._node_list)
+        )
 
         self._builder.add_edge(START, "supervisor")
 
