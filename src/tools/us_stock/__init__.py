@@ -4,14 +4,15 @@ from .alpha_vantage_client import AlphaVantageAPIWrapper
 from .alpha_vantage_profitability import (
     analyze_profitability_from_profile,
     analyze_profitability_from_income_statement,
-    calculate_overall_profitability_assessment
+    calculate_overall_profitability_assessment,
 )
 from .alpha_vantage_stability import (
     analyze_stability_from_balance_sheet,
     analyze_stability_from_cash_flow,
-    calculate_overall_stability_assessment
+    calculate_overall_stability_assessment,
 )
 from .alpha_vantage_formatters import format_financial_analysis
+
 
 # Integrate analysis functions
 def analyze_financial_data(api_wrapper, data: dict) -> dict:
@@ -31,7 +32,9 @@ def analyze_financial_data(api_wrapper, data: dict) -> dict:
         if "Industry" in profile:
             analysis["industry"] = profile["Industry"]
         if "MarketCapitalization" in profile:
-            market_cap = api_wrapper.safe_float_or_empty(profile["MarketCapitalization"])
+            market_cap = api_wrapper.safe_float_or_empty(
+                profile["MarketCapitalization"]
+            )
             analysis["market_cap"] = api_wrapper.format_financial_value(market_cap)
         if "FullTimeEmployees" in profile:
             analysis["employees"] = (
@@ -74,16 +77,22 @@ def analyze_financial_data(api_wrapper, data: dict) -> dict:
         analysis.update(profitability_metrics)
 
     if income_statement_data:
-        income_statement_metrics = analyze_profitability_from_income_statement(api_wrapper, income_statement_data)
+        income_statement_metrics = analyze_profitability_from_income_statement(
+            api_wrapper, income_statement_data
+        )
         analysis.update(income_statement_metrics)
 
     # Run stability analysis
     if balance_sheet_data:
-        balance_sheet_metrics = analyze_stability_from_balance_sheet(api_wrapper, balance_sheet_data, income_statement_data)
+        balance_sheet_metrics = analyze_stability_from_balance_sheet(
+            api_wrapper, balance_sheet_data, income_statement_data
+        )
         analysis.update(balance_sheet_metrics)
 
     if cash_flow_data:
-        cash_flow_metrics = analyze_stability_from_cash_flow(api_wrapper, cash_flow_data, income_statement_data)
+        cash_flow_metrics = analyze_stability_from_cash_flow(
+            api_wrapper, cash_flow_data, income_statement_data
+        )
         analysis.update(cash_flow_metrics)
 
     # Calculate overall assessments
@@ -94,7 +103,7 @@ def analyze_financial_data(api_wrapper, data: dict) -> dict:
 
 
 __all__ = [
-    'AlphaVantageAPIWrapper',
-    'analyze_financial_data',
-    'format_financial_analysis',
+    "AlphaVantageAPIWrapper",
+    "analyze_financial_data",
+    "format_financial_analysis",
 ]
