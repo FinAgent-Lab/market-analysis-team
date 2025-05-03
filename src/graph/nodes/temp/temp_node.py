@@ -21,14 +21,6 @@ class TempNode(Node):
         super().__init__()
         self.llm = ChatOpenAI(model=self.DEFAULT_LLM_MODEL)
         self.executor = self.create_agent_graph()
-        self.system_prompt = (
-            "You are a news search agent for financial news using google search api."
-            "Only use financial source and data to conduct US stock market analysis."
-            "Do nothing else"
-            "print result in Korean"
-        )
-        self.agent = None
-        self.tools = [GoogleSearch()]
 
     def _run(self, state: dict) -> dict:
 
@@ -46,6 +38,8 @@ class TempNode(Node):
             goto="supervisor",
         )
 
+    # TODO: _run 함수와 유사하게 작성. 이 함수를 이용하면, 직접 받는 API를 노출시키고 테스트할 수 있음. 실제 수퍼바이저 노드 연동과는 무관
+    # 현재 google search node 기준이므로 수정이 필요해요.
     def _invoke(self, query: str) -> RawResponse:
         agent = self.agent or create_react_agent(
             ChatOpenAI(model=self.DEFAULT_LLM_MODEL),
