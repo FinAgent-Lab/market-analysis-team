@@ -22,124 +22,6 @@ class ESGSearchWrapper(BaseModel):
         arbitrary_types_allowed=True,
     )
 
-    # # 비동기 메서드
-    # async def get_from_db_async(self, ticker: str) -> Dict[str, Any]:
-    #     """데이터베이스에서 ESG 데이터를 비동기적으로 조회합니다.
-
-    #     Args:
-    #         ticker: 조회할 주식 티커 심볼
-
-    #     Returns:
-    #         ESG 데이터
-    #     """
-    #     try:
-    #         ticker = ticker.upper()
-    #         async for session in get_async_session():
-    #             query = select(ESGData).where(ESGData.ticker == ticker)
-
-    #             query = query.order_by(
-    #                 ESGData.rating_year.desc(), ESGData.rating_month.desc()
-    #             )
-
-    #             result = await session.execute(query)
-    #             esg_records = result.scalars().all()
-
-    #             # 메인 데이터 구조 생성
-    #             response = {"ticker": ticker, "records": []}
-
-    #             # 기록들을 리스트에 추가
-    #             for record in esg_records:
-    #                 response["records"].append(
-    #                     {
-    #                         "total_esg": record.total_esg,
-    #                         "environment_score": record.environment_score,
-    #                         "social_score": record.social_score,
-    #                         "governance_score": record.governance_score,
-    #                         "rating_year": record.rating_year,
-    #                         "rating_month": record.rating_month,
-    #                     }
-    #                 )
-
-    #             # 결과가 있는 경우 첫 번째 레코드의 정보를 최상위 레벨에도 추가 (가장 최신 데이터)
-    #             if esg_records:
-    #                 latest = esg_records[0]
-    #                 response.update(
-    #                     {
-    #                         "total_esg": latest.total_esg,
-    #                         "environment_score": latest.environment_score,
-    #                         "social_score": latest.social_score,
-    #                         "governance_score": latest.governance_score,
-    #                         "rating_year": latest.rating_year,
-    #                         "rating_month": latest.rating_month,
-    #                     }
-    #                 )
-
-    #             return response
-    #     except Exception as e:
-    #         return {
-    #             "ticker": ticker,
-    #             "error": f"데이터베이스 조회 중 오류 발생: {str(e)}",
-    #         }
-
-    # # 동기 메서드
-    # def get_from_db_sync(self, ticker: str) -> Dict[str, Any]:
-    #     """데이터베이스에서 ESG 데이터를 동기적으로 조회합니다.
-
-    #     Args:
-    #         ticker: 조회할 주식 티커 심볼
-
-    #     Returns:
-    #         ESG 데이터
-    #     """
-    #     try:
-    #         ticker = ticker.upper()
-    #         for session in get_sync_session():
-    #             query = select(ESGData).where(ESGData.ticker == ticker)
-
-    #             query = query.order_by(
-    #                 ESGData.rating_year.desc(), ESGData.rating_month.desc()
-    #             )
-
-    #             result = session.execute(query)
-    #             esg_records = result.scalars().all()
-
-    #             # 메인 데이터 구조 생성
-    #             response = {"ticker": ticker, "records": []}
-
-    #             # 기록들을 리스트에 추가
-    #             for record in esg_records:
-    #                 response["records"].append(
-    #                     {
-    #                         "total_esg": record.total_esg,
-    #                         "environment_score": record.environment_score,
-    #                         "social_score": record.social_score,
-    #                         "governance_score": record.governance_score,
-    #                         "rating_year": record.rating_year,
-    #                         "rating_month": record.rating_month,
-    #                     }
-    #                 )
-
-    #             # 결과가 있는 경우 첫 번째 레코드의 정보를 최상위 레벨에도 추가 (가장 최신 데이터)
-    #             if esg_records:
-    #                 latest = esg_records[0]
-    #                 response.update(
-    #                     {
-    #                         "total_esg": latest.total_esg,
-    #                         "environment_score": latest.environment_score,
-    #                         "social_score": latest.social_score,
-    #                         "governance_score": latest.governance_score,
-    #                         "rating_year": latest.rating_year,
-    #                         "rating_month": latest.rating_month,
-    #                     }
-    #                 )
-
-    #             return response
-    #     except Exception as e:
-    #         return {
-    #             "ticker": ticker,
-    #             "error": f"데이터베이스 조회 중 오류 발생: {str(e)}",
-    #         }
-
     # 비동기 메서드
     async def get_from_yfinance_async(self, ticker: str) -> Dict[str, Any]:
         """Asynchronously retrieve the latest ESG data from the yfinance API.
@@ -265,13 +147,6 @@ class ESGSearchWrapper(BaseModel):
         """
         ticker = ticker.upper()
 
-        # if not force_refresh:
-        #     # 데이터베이스에서 먼저 조회
-        #     db_results = await self.get_from_db_async(ticker)
-        #     # 데이터가 있고 오류가 없는 경우 반환
-        #     if db_results and "error" not in db_results and db_results.get("records"):
-        #         return db_results
-
         yf_result = await self.get_from_yfinance_async(ticker)
 
         return yf_result
@@ -291,13 +166,6 @@ class ESGSearchWrapper(BaseModel):
             ESG data
         """
         ticker = ticker.upper()
-
-        # if not force_refresh:
-        #     # 데이터베이스에서 먼저 조회
-        #     db_results = self.get_from_db_sync(ticker)
-        #     # 데이터가 있고 오류가 없는 경우 반환
-        #     if db_results and "error" not in db_results and db_results.get("records"):
-        #         return db_results
 
         # 데이터베이스에 없거나 강제 새로고침이 요청된 경우 yfinance에서 가져오기
         yf_result = self.get_from_yfinance_sync(ticker)

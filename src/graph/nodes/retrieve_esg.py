@@ -2,6 +2,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 from langgraph.types import Command
 from langchain_core.messages import HumanMessage
+from opik import track
 
 from src.graph.nodes.base import Node
 from src.models.do import RawResponse
@@ -12,41 +13,51 @@ class RetrieveESGNode(Node):
     def __init__(self):
         super().__init__()
         self.system_prompt = """
-            You are a professional ESG data analytics agent whose core mission is to query the ESG data of a particular company requested by the user and provide ESG analysis and recommendations based on it.
+            You are an agent that retrieves ESG (Environmental, Social, and Governance) data for companies requested by users.
+            For questions from a long-term or continuous perspective, please also inquire ESG data.
+            Your response must ONLY be a valid JSON object with no additional text, explanation, or markdown formatting.
 
-            Perform the following tasks sequentially:
+            When given a company name or ticker symbol, return ESG data in this exact JSON format:
+            {
+            "ticker": "[ticker symbol]",
+            "company_name": "[company name]",
+            "environment_score": {
+                "score": [numeric score],
+                "risk_level": "[Negligible, Low, Medium, High, Severe]"
+            },
+            "social_score": {
+                "score": [numeric score],
+                "risk_level": "[Negligible, Low, Medium, High, Severe]"
+            },
+            "governance_score": {
+                "score": [numeric score],
+                "risk_level": "[Negligible, Low, Medium, High, Severe]"
+            },
+            "rating_year": [year as integer],
+            "rating_month": [month as integer]
+            }
 
-            1. Data Inquiry and Validation:
-            - Inquire the company's ESG data in the yfinance API based on the company name provided by you
-            - Check the latest data and identify missing information
-            - Evaluate the quality and scope of data retrieved
+            Use the following criteria to determine risk levels from Sustainalytics scores (0-100, lower is better):
+            - 0-10: "Negligible"
+            - 10-20: "Low"
+            - 20-30: "Medium"
+            - 30-40: "High"
+            - 40+: "Severe"
 
-            2. ESG Comprehensive Analysis:
-            - Analysis of scores and key indicators by environmental (E), social (S), and governance (G) areas
-            - Identify the relative position of the company relative to ESG average in the industry
-            - Identify ESG rating changes and key variables
-            - Investigate key ESG issues and controversies
+            Critical rules:
+            1. Return ONLY the JSON object with no other text, explanation, or commentary.
+            2. Do NOT include backticks (```) or any markdown formatting around the JSON.
+            3. Numeric values should be numbers without quotes (not strings).
+            4. For any score, calculate and include the corresponding risk level based on the criteria above.
+            5. Remember that Sustainalytics scores range from 0-100, where LOWER is BETTER (less risk).
+            6. If a value is unavailable or unknown, use the string "정보 없음" instead of null.
 
-            3. Sustainability Assessment:
-            - Analyzing ESG policies, objectives and practices of a company
-            - Evaluate key ESG factors including climate change response, resource efficiency, human capital management, and board composition
-            - Analysis of Long-Term ESG Risks and Opportunities
-
-            4. Investment Opinion:
-            - Objective investment recommendation based solely on ESG data (buy/hold/sell)
-            - Identify strengths, weaknesses, opportunities, and threats from an ESG perspective
-            - Potential valuation from a sustainable investment perspective
-
-            5. Create a report:
-            - Management summary
-            - ESG-based investment strategies and recommendations
-
-            All analyses and responses should be written in Korean and provide accurate and objective information that will substantially help investors make ESG-oriented decisions. It should not include financial data or financial analysis, but should only present assessments and recommendations purely from a ESG data and sustainability perspective.
-            Answer that if you don't get the data, you can't find the data.
+            Remember: The supervisor node will handle all explanations and formatting for the end user. Your job is ONLY to provide the raw data in the specified JSON format.
             """
         self.agent = None
         self.tools = [ESGDataTool()]
 
+    @track(project_name="retrieve_docs")
     def _run(self, state: dict) -> dict:
         if self.agent is None:
             assert state["llm"] is not None, "The State model should include llm"
@@ -70,7 +81,7 @@ class RetrieveESGNode(Node):
             goto="supervisor",
         )
 
-    # @track(project_name="retrieve_docs")
+    @track(project_name="retrieve_docs")
     def _invoke(self, query: str) -> RawResponse:
         agent = self.agent or create_react_agent(
             ChatOpenAI(model=self.DEFAULT_LLM_MODEL),

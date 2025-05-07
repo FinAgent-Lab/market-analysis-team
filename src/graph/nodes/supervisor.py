@@ -12,10 +12,11 @@ class SupervisorNode(Node):
         self.members = []
         self.system_prompt_template = (
             "You are a supervisor tasked with managing a conversation between the"
-            " following workers: {members}. Given the following user request,"
-            " respond with the worker to act next. Each worker will perform a"
-            " task and respond with their results and status. When finished,"
-            " respond with FINISH."
+            " following workers: {members}. Given the following user request and"
+            " all previous conversation history, respond with the worker to act next."
+            " Review ALL previous messages and worker responses to make your decision."
+            " Each worker will perform a task and respond with their results and status."
+            " When the full task is completed, respond with FINISH."
         )
 
     @property
