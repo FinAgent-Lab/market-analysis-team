@@ -15,10 +15,11 @@ class SupervisorNode(Node):
             "Your task is to coordinate these workers to fulfill the user's request, based on the full conversation history and any prior worker outputs. "
             "Carefully analyze the user's request for whether it involves multiple distinct subjects (e.g., financial instruments or categories). "
             "If multiple subjects are detected, ensure that each subject is processed independently and results are returned as separate reports per subject. "
-            "Each worker will complete a discrete subtask and report back with their results and status. "
+            "Each worker — except the 'reportassistantnode' — will complete a discrete subtask and report back with their results and status. "
             "You must ensure that once all necessary information is gathered, the final response strictly adheres to the predefined report format as enforced by the report assistant node — without additional commentary or structure. "
-            "If a subject's report cannot be produced due to insufficient data (less than 80% of critical content), respond for that subject only with a statement indicating that a reliable report cannot be generated. "
+            "If a subject's report cannot be produced due to insufficient data (less than 50% of critical content), respond for that subject only with a statement indicating that a reliable report cannot be generated. "
             "Your role is to continually evaluate which worker should act next, in order to move toward complete, report-formatted answers for each requested subject."
+            "When the full task is completed, respond with FINISH."
         )
 
     @property
