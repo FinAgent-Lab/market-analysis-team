@@ -19,18 +19,26 @@ def analyze_profitability_from_profile(api_wrapper, profile: Dict) -> Dict:
 
                 # Enhanced ROE evaluation with industry benchmarks
                 if roe_value > 20:
-                    analysis["roe_evaluation"] = "Exceptional ROE - Top tier profitability"
+                    analysis["roe_evaluation"] = (
+                        "Exceptional ROE - Top tier profitability"
+                    )
                 elif roe_value > 15:
                     analysis["roe_evaluation"] = "Excellent ROE - Strong profitability"
                 elif roe_value > 10:
-                    analysis["roe_evaluation"] = "Good ROE - Above average profitability"
+                    analysis["roe_evaluation"] = (
+                        "Good ROE - Above average profitability"
+                    )
                 elif roe_value > 5:
                     analysis["roe_evaluation"] = "Average ROE - Moderate profitability"
                 else:
-                    analysis["roe_evaluation"] = "Below average ROE - May indicate profitability concerns"
+                    analysis["roe_evaluation"] = (
+                        "Below average ROE - May indicate profitability concerns"
+                    )
             else:
                 analysis["roe"] = "No data"
-                analysis["roe_evaluation"] = "Unable to evaluate ROE due to insufficient data"
+                analysis["roe_evaluation"] = (
+                    "Unable to evaluate ROE due to insufficient data"
+                )
 
         # Return on Assets (ROA)
         if "ReturnOnAssetsTTM" in profile:
@@ -54,7 +62,9 @@ def analyze_profitability_from_profile(api_wrapper, profile: Dict) -> Dict:
                     analysis["roa_evaluation"] = "Inefficient asset utilization"
             else:
                 analysis["roa"] = "No data"
-                analysis["roa_evaluation"] = "Unable to evaluate ROA due to insufficient data"
+                analysis["roa_evaluation"] = (
+                    "Unable to evaluate ROA due to insufficient data"
+                )
 
         # Operating Margin (Profitability)
         if "OperatingMarginTTM" in profile:
@@ -67,18 +77,30 @@ def analyze_profitability_from_profile(api_wrapper, profile: Dict) -> Dict:
 
                 # Enhanced operating margin evaluation based on industry patterns
                 if op_margin_value > 25:
-                    analysis["operating_margin_evaluation"] = "Elite operating efficiency - Exceptional cost control"
+                    analysis["operating_margin_evaluation"] = (
+                        "Elite operating efficiency - Exceptional cost control"
+                    )
                 elif op_margin_value > 15:
-                    analysis["operating_margin_evaluation"] = "Excellent operating efficiency - Strong pricing power"
+                    analysis["operating_margin_evaluation"] = (
+                        "Excellent operating efficiency - Strong pricing power"
+                    )
                 elif op_margin_value > 10:
-                    analysis["operating_margin_evaluation"] = "Good operating efficiency - Above average"
+                    analysis["operating_margin_evaluation"] = (
+                        "Good operating efficiency - Above average"
+                    )
                 elif op_margin_value > 5:
-                    analysis["operating_margin_evaluation"] = "Average operating efficiency"
+                    analysis["operating_margin_evaluation"] = (
+                        "Average operating efficiency"
+                    )
                 else:
-                    analysis["operating_margin_evaluation"] = "Below average operating efficiency - Potential cost structure issues"
+                    analysis["operating_margin_evaluation"] = (
+                        "Below average operating efficiency - Potential cost structure issues"
+                    )
             else:
                 analysis["operating_margin"] = "No data"
-                analysis["operating_margin_evaluation"] = "Unable to evaluate operating margin due to insufficient data"
+                analysis["operating_margin_evaluation"] = (
+                    "Unable to evaluate operating margin due to insufficient data"
+                )
 
         # Net Profit Margin
         if "ProfitMargin" in profile:
@@ -86,32 +108,42 @@ def analyze_profitability_from_profile(api_wrapper, profile: Dict) -> Dict:
             if profit_margin is not None:
                 profit_margin_value = profit_margin * 100
                 analysis["profit_margin"] = api_wrapper.format_financial_value(
-                    profit_margin_value,
-                    include_dollar=False,
-                    include_percent=True
+                    profit_margin_value, include_dollar=False, include_percent=True
                 )
 
                 # Enhanced profit margin evaluation
                 if profit_margin_value > 20:
-                    analysis["profit_margin_evaluation"] = "Elite profitability - Exceptional business model"
+                    analysis["profit_margin_evaluation"] = (
+                        "Elite profitability - Exceptional business model"
+                    )
                 elif profit_margin_value > 15:
-                    analysis["profit_margin_evaluation"] = "Excellent profitability - Very strong business model"
+                    analysis["profit_margin_evaluation"] = (
+                        "Excellent profitability - Very strong business model"
+                    )
                 elif profit_margin_value > 10:
-                    analysis["profit_margin_evaluation"] = "Strong profitability - Good business model"
+                    analysis["profit_margin_evaluation"] = (
+                        "Strong profitability - Good business model"
+                    )
                 elif profit_margin_value > 5:
                     analysis["profit_margin_evaluation"] = "Average profitability"
                 else:
-                    analysis["profit_margin_evaluation"] = "Below average profitability - May indicate structural issues"
+                    analysis["profit_margin_evaluation"] = (
+                        "Below average profitability - May indicate structural issues"
+                    )
             else:
                 analysis["profit_margin"] = "No data"
-                analysis["profit_margin_evaluation"] = "Unable to evaluate profit margin due to insufficient data"
+                analysis["profit_margin_evaluation"] = (
+                    "Unable to evaluate profit margin due to insufficient data"
+                )
     except Exception as e:
         analysis["profile_profitability_analysis_error"] = str(e)
 
     return analysis
 
 
-def analyze_profitability_from_income_statement(api_wrapper, income_statement_data: Dict) -> Dict:
+def analyze_profitability_from_income_statement(
+    api_wrapper, income_statement_data: Dict
+) -> Dict:
     """Analyze profitability metrics from income statement data."""
     analysis = {}
 
@@ -129,7 +161,9 @@ def analyze_profitability_from_income_statement(api_wrapper, income_statement_da
         # Extract key metrics
         recent_revenue = api_wrapper.safe_float_or_empty(recent.get("totalRevenue"))
         recent_gross_profit = api_wrapper.safe_float_or_empty(recent.get("grossProfit"))
-        recent_operating_income = api_wrapper.safe_float_or_empty(recent.get("operatingIncome"))
+        recent_operating_income = api_wrapper.safe_float_or_empty(
+            recent.get("operatingIncome")
+        )
         recent_net_income = api_wrapper.safe_float_or_empty(recent.get("netIncome"))
         ebitda = api_wrapper.safe_float_or_empty(recent.get("ebitda"))
 
@@ -138,9 +172,15 @@ def analyze_profitability_from_income_statement(api_wrapper, income_statement_da
 
         # Add basic metrics
         analysis["recent_revenue"] = api_wrapper.format_financial_value(recent_revenue)
-        analysis["recent_gross_profit"] = api_wrapper.format_financial_value(recent_gross_profit)
-        analysis["recent_operating_income"] = api_wrapper.format_financial_value(recent_operating_income)
-        analysis["recent_net_income"] = api_wrapper.format_financial_value(recent_net_income)
+        analysis["recent_gross_profit"] = api_wrapper.format_financial_value(
+            recent_gross_profit
+        )
+        analysis["recent_operating_income"] = api_wrapper.format_financial_value(
+            recent_operating_income
+        )
+        analysis["recent_net_income"] = api_wrapper.format_financial_value(
+            recent_net_income
+        )
 
         # Add EBITDA - important profitability metric
         if ebitda is not None:
@@ -151,15 +191,23 @@ def analyze_profitability_from_income_statement(api_wrapper, income_statement_da
 
                 # EBITDA margin evaluation
                 if ebitda_margin > 30:
-                    analysis["ebitda_margin_evaluation"] = "Exceptional EBITDA margin - Elite operational efficiency"
+                    analysis["ebitda_margin_evaluation"] = (
+                        "Exceptional EBITDA margin - Elite operational efficiency"
+                    )
                 elif ebitda_margin > 20:
-                    analysis["ebitda_margin_evaluation"] = "Excellent EBITDA margin - Strong operational efficiency"
+                    analysis["ebitda_margin_evaluation"] = (
+                        "Excellent EBITDA margin - Strong operational efficiency"
+                    )
                 elif ebitda_margin > 15:
-                    analysis["ebitda_margin_evaluation"] = "Good EBITDA margin - Above average operational efficiency"
+                    analysis["ebitda_margin_evaluation"] = (
+                        "Good EBITDA margin - Above average operational efficiency"
+                    )
                 elif ebitda_margin > 10:
                     analysis["ebitda_margin_evaluation"] = "Average EBITDA margin"
                 else:
-                    analysis["ebitda_margin_evaluation"] = "Below average EBITDA margin - Operational efficiency concerns"
+                    analysis["ebitda_margin_evaluation"] = (
+                        "Below average EBITDA margin - Operational efficiency concerns"
+                    )
 
         # Calculate margin metrics if revenue data is available
         if recent_revenue is not None and recent_revenue > 0:
@@ -170,35 +218,58 @@ def analyze_profitability_from_income_statement(api_wrapper, income_statement_da
 
                 # Enhanced gross margin evaluation
                 if gross_margin > 50:
-                    analysis["gross_margin_evaluation"] = "Exceptional gross margins - Premium pricing power"
+                    analysis["gross_margin_evaluation"] = (
+                        "Exceptional gross margins - Premium pricing power"
+                    )
                 elif gross_margin > 40:
-                    analysis["gross_margin_evaluation"] = "Excellent gross margins - Strong pricing power"
+                    analysis["gross_margin_evaluation"] = (
+                        "Excellent gross margins - Strong pricing power"
+                    )
                 elif gross_margin > 30:
-                    analysis["gross_margin_evaluation"] = "Good gross margins - Healthy pricing power"
+                    analysis["gross_margin_evaluation"] = (
+                        "Good gross margins - Healthy pricing power"
+                    )
                 elif gross_margin > 20:
                     analysis["gross_margin_evaluation"] = "Average gross margins"
                 else:
-                    analysis["gross_margin_evaluation"] = "Below average gross margins - Limited pricing power"
+                    analysis["gross_margin_evaluation"] = (
+                        "Below average gross margins - Limited pricing power"
+                    )
             else:
                 analysis["gross_margin"] = "No data"
-                analysis["gross_margin_evaluation"] = "Unable to evaluate gross margins due to insufficient data"
+                analysis["gross_margin_evaluation"] = (
+                    "Unable to evaluate gross margins due to insufficient data"
+                )
 
             # Operating Margin (if not already calculated from profile)
-            if recent_operating_income is not None and "operating_margin" not in analysis:
+            if (
+                recent_operating_income is not None
+                and "operating_margin" not in analysis
+            ):
                 operating_margin = (recent_operating_income / recent_revenue) * 100
                 analysis["operating_margin"] = f"{operating_margin:.2f}%"
 
                 # Enhanced operating margin evaluation
                 if operating_margin > 25:
-                    analysis["operating_margin_evaluation"] = "Elite operating efficiency - Exceptional cost control"
+                    analysis["operating_margin_evaluation"] = (
+                        "Elite operating efficiency - Exceptional cost control"
+                    )
                 elif operating_margin > 15:
-                    analysis["operating_margin_evaluation"] = "Excellent operating efficiency - Strong pricing power"
+                    analysis["operating_margin_evaluation"] = (
+                        "Excellent operating efficiency - Strong pricing power"
+                    )
                 elif operating_margin > 10:
-                    analysis["operating_margin_evaluation"] = "Good operating efficiency - Above average"
+                    analysis["operating_margin_evaluation"] = (
+                        "Good operating efficiency - Above average"
+                    )
                 elif operating_margin > 5:
-                    analysis["operating_margin_evaluation"] = "Average operating efficiency"
+                    analysis["operating_margin_evaluation"] = (
+                        "Average operating efficiency"
+                    )
                 else:
-                    analysis["operating_margin_evaluation"] = "Below average operating efficiency - Potential cost structure issues"
+                    analysis["operating_margin_evaluation"] = (
+                        "Below average operating efficiency - Potential cost structure issues"
+                    )
 
             # Net Margin (if not already calculated from profile)
             if recent_net_income is not None and "net_margin" not in analysis:
@@ -207,19 +278,33 @@ def analyze_profitability_from_income_statement(api_wrapper, income_statement_da
 
                 # Enhanced net margin evaluation
                 if net_margin > 20:
-                    analysis["net_margin_evaluation"] = "Elite net profitability - Exceptional business model"
+                    analysis["net_margin_evaluation"] = (
+                        "Elite net profitability - Exceptional business model"
+                    )
                 elif net_margin > 15:
-                    analysis["net_margin_evaluation"] = "Excellent net profitability - Very strong business model"
+                    analysis["net_margin_evaluation"] = (
+                        "Excellent net profitability - Very strong business model"
+                    )
                 elif net_margin > 10:
-                    analysis["net_margin_evaluation"] = "Strong net profitability - Good business model"
+                    analysis["net_margin_evaluation"] = (
+                        "Strong net profitability - Good business model"
+                    )
                 elif net_margin > 5:
                     analysis["net_margin_evaluation"] = "Average net profitability"
                 else:
-                    analysis["net_margin_evaluation"] = "Below average net profitability - May indicate structural issues"
+                    analysis["net_margin_evaluation"] = (
+                        "Below average net profitability - May indicate structural issues"
+                    )
 
         # Growth metrics
-        if previous_revenue is not None and recent_revenue is not None and previous_revenue > 0:
-            revenue_growth = ((recent_revenue - previous_revenue) / previous_revenue) * 100
+        if (
+            previous_revenue is not None
+            and recent_revenue is not None
+            and previous_revenue > 0
+        ):
+            revenue_growth = (
+                (recent_revenue - previous_revenue) / previous_revenue
+            ) * 100
             analysis["revenue_growth"] = f"{revenue_growth:.2f}%"
 
             if revenue_growth > 20:
@@ -232,10 +317,18 @@ def analyze_profitability_from_income_statement(api_wrapper, income_statement_da
                 analysis["revenue_growth_evaluation"] = "Declining revenue"
         else:
             analysis["revenue_growth"] = "No data"
-            analysis["revenue_growth_evaluation"] = "Unable to evaluate revenue growth due to insufficient data"
+            analysis["revenue_growth_evaluation"] = (
+                "Unable to evaluate revenue growth due to insufficient data"
+            )
 
-        if previous_net_income is not None and recent_net_income is not None and previous_net_income > 0:
-            net_income_growth = ((recent_net_income - previous_net_income) / previous_net_income) * 100
+        if (
+            previous_net_income is not None
+            and recent_net_income is not None
+            and previous_net_income > 0
+        ):
+            net_income_growth = (
+                (recent_net_income - previous_net_income) / previous_net_income
+            ) * 100
             analysis["net_income_growth"] = f"{net_income_growth:.2f}%"
 
             # Net income growth evaluation
@@ -248,10 +341,14 @@ def analyze_profitability_from_income_statement(api_wrapper, income_statement_da
             elif net_income_growth > 0:
                 analysis["net_income_growth_evaluation"] = "Modest profit growth"
             else:
-                analysis["net_income_growth_evaluation"] = "Declining profitability - Potential concerns"
+                analysis["net_income_growth_evaluation"] = (
+                    "Declining profitability - Potential concerns"
+                )
         else:
             analysis["net_income_growth"] = "No data"
-            analysis["net_income_growth_evaluation"] = "Unable to evaluate profit growth due to insufficient data"
+            analysis["net_income_growth_evaluation"] = (
+                "Unable to evaluate profit growth due to insufficient data"
+            )
 
     except Exception as e:
         analysis["income_statement_profitability_analysis_error"] = str(e)
@@ -266,7 +363,10 @@ def calculate_overall_profitability_assessment(analysis: Dict) -> Dict:
 
         # ROE assessment
         if "roe_evaluation" in analysis:
-            if "Exceptional" in analysis["roe_evaluation"] or "Excellent" in analysis["roe_evaluation"]:
+            if (
+                "Exceptional" in analysis["roe_evaluation"]
+                or "Excellent" in analysis["roe_evaluation"]
+            ):
                 profitability_factors.append(2)  # Strong positive
             elif "Good" in analysis["roe_evaluation"]:
                 profitability_factors.append(1)  # Positive
@@ -277,7 +377,10 @@ def calculate_overall_profitability_assessment(analysis: Dict) -> Dict:
 
         # Operating margin assessment
         if "operating_margin_evaluation" in analysis:
-            if "Elite" in analysis["operating_margin_evaluation"] or "Excellent" in analysis["operating_margin_evaluation"]:
+            if (
+                "Elite" in analysis["operating_margin_evaluation"]
+                or "Excellent" in analysis["operating_margin_evaluation"]
+            ):
                 profitability_factors.append(2)  # Strong positive
             elif "Good" in analysis["operating_margin_evaluation"]:
                 profitability_factors.append(1)  # Positive
@@ -288,7 +391,10 @@ def calculate_overall_profitability_assessment(analysis: Dict) -> Dict:
 
         # Net margin assessment
         if "net_margin_evaluation" in analysis:
-            if "Elite" in analysis["net_margin_evaluation"] or "Excellent" in analysis["net_margin_evaluation"]:
+            if (
+                "Elite" in analysis["net_margin_evaluation"]
+                or "Excellent" in analysis["net_margin_evaluation"]
+            ):
                 profitability_factors.append(2)  # Strong positive
             elif "Strong" in analysis["net_margin_evaluation"]:
                 profitability_factors.append(1)  # Positive
@@ -299,7 +405,10 @@ def calculate_overall_profitability_assessment(analysis: Dict) -> Dict:
 
         # ROA assessment if available
         if "roa_evaluation" in analysis:
-            if "Excellent" in analysis["roa_evaluation"] or "Strong" in analysis["roa_evaluation"]:
+            if (
+                "Excellent" in analysis["roa_evaluation"]
+                or "Strong" in analysis["roa_evaluation"]
+            ):
                 profitability_factors.append(2)  # Strong positive
             elif "Good" in analysis["roa_evaluation"]:
                 profitability_factors.append(1)  # Positive
@@ -314,15 +423,25 @@ def calculate_overall_profitability_assessment(analysis: Dict) -> Dict:
 
             # Provide overall profitability evaluation
             if avg_score > 1.5:
-                analysis["overall_profitability_assessment"] = "Exceptional profitability - Industry leading performance"
+                analysis["overall_profitability_assessment"] = (
+                    "Exceptional profitability - Industry leading performance"
+                )
             elif avg_score > 0.75:
-                analysis["overall_profitability_assessment"] = "Strong profitability - Above industry average performance"
+                analysis["overall_profitability_assessment"] = (
+                    "Strong profitability - Above industry average performance"
+                )
             elif avg_score > 0:
-                analysis["overall_profitability_assessment"] = "Good profitability - Competitive performance"
+                analysis["overall_profitability_assessment"] = (
+                    "Good profitability - Competitive performance"
+                )
             elif avg_score > -0.5:
-                analysis["overall_profitability_assessment"] = "Adequate profitability - Room for improvement"
+                analysis["overall_profitability_assessment"] = (
+                    "Adequate profitability - Room for improvement"
+                )
             else:
-                analysis["overall_profitability_assessment"] = "Weak profitability - Significant concerns"
+                analysis["overall_profitability_assessment"] = (
+                    "Weak profitability - Significant concerns"
+                )
 
         return analysis
 
