@@ -45,17 +45,17 @@ class USFinancialStatementTool(BaseTool):
         self._llm = value
 
     def safe_format(
-        self, value: Any, prefix: str = "", suffix: str = "", decimal_places: int = 2
+            self, value: Any, prefix: str = "", suffix: str = "", decimal_places: int = 2
     ) -> str:
         """
         Safely format financial values.
         Returns 'No data' for None or 'None' values.
         """
         if (
-            value is None
-            or value == ""
-            or value == "None"
-            or (isinstance(value, str) and value.strip().lower() == "none")
+                value is None
+                or value == ""
+                or value == "None"
+                or (isinstance(value, str) and value.strip().lower() == "none")
         ):
             return "No data"
         try:
@@ -109,9 +109,7 @@ class USFinancialStatementTool(BaseTool):
                         print(f"Ticker verified: {ticker}")
                         return ticker
                     else:
-                        print(
-                            f"Ticker verification failed: {result.get('error', 'Unknown error')}"
-                        )
+                        print(f"Ticker verification failed: {result.get('error', 'Unknown error')}")
                 except Exception as e:
                     print(f"Error verifying ticker with Alpha Vantage: {e}")
                     # Return the ticker if it has the right format, even if API verification fails
@@ -125,9 +123,9 @@ class USFinancialStatementTool(BaseTool):
             return None
 
     def _run(
-        self,
-        query: str,
-        run_manager: Optional[CallbackManagerForToolRun] = None,
+            self,
+            query: str,
+            run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> Union[Dict, str]:
         """Run the tool."""
         try:
@@ -142,7 +140,6 @@ class USFinancialStatementTool(BaseTool):
             return format_financial_analysis(result)
         except Exception as e:
             import traceback
-
             print(f"Error analyzing financial statements: {repr(e)}")
             print(traceback.format_exc())
             return f"Error analyzing financial statements: {repr(e)}"
