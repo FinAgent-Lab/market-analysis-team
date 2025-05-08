@@ -66,8 +66,8 @@ class Pipeline:
         except Exception as e:
             error_message = str(e)
             if "404" in error_message:
-                return f"Error: The US Stock Profitability & Stability Analysis service is not available. Please check if the service is running."
+                return "Error: The US Stock Profitability & Stability Analysis service is not available. Please check if the service is running."
             elif "Connection" in error_message:
-                return f"Error: Could not connect to the analysis service. Please check your network connection."
+                return "Error: Could not connect to the analysis service. Please check your network connection."
             else:
                 return f"Error analyzing profitability and stability metrics: {e}"
