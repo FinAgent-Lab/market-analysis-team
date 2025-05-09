@@ -12,6 +12,7 @@ from src.graph.nodes import (
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
     WeeklyReporterNode,
+    USFinancialAnalyzerNode
 )
 from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
@@ -82,7 +83,7 @@ def main(
     # graph_builder.add_node(HantooFinancialAnalyzerNode())
 
     # 미국 주식 분석 에이전트 노드 추가 (Alpha Vantage API 사용)
-    # graph_builder.add_node(USFinancialAnalyzerNode())
+    graph_builder.add_node(USFinancialAnalyzerNode())
 
     vector_store = Container.vector_store_recap()
     graph_builder.add_node(WeeklyReporterNode(vector_store))

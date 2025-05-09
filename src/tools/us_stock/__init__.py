@@ -32,9 +32,7 @@ def analyze_financial_data(api_wrapper, data: dict) -> dict:
         if "Industry" in profile:
             analysis["industry"] = profile["Industry"]
         if "MarketCapitalization" in profile:
-            market_cap = api_wrapper.safe_float_or_empty(
-                profile["MarketCapitalization"]
-            )
+            market_cap = api_wrapper.safe_float_or_empty(profile["MarketCapitalization"])
             analysis["market_cap"] = api_wrapper.format_financial_value(market_cap)
         if "FullTimeEmployees" in profile:
             analysis["employees"] = (
@@ -77,22 +75,16 @@ def analyze_financial_data(api_wrapper, data: dict) -> dict:
         analysis.update(profitability_metrics)
 
     if income_statement_data:
-        income_statement_metrics = analyze_profitability_from_income_statement(
-            api_wrapper, income_statement_data
-        )
+        income_statement_metrics = analyze_profitability_from_income_statement(api_wrapper, income_statement_data)
         analysis.update(income_statement_metrics)
 
     # Run stability analysis
     if balance_sheet_data:
-        balance_sheet_metrics = analyze_stability_from_balance_sheet(
-            api_wrapper, balance_sheet_data, income_statement_data
-        )
+        balance_sheet_metrics = analyze_stability_from_balance_sheet(api_wrapper, balance_sheet_data, income_statement_data)
         analysis.update(balance_sheet_metrics)
 
     if cash_flow_data:
-        cash_flow_metrics = analyze_stability_from_cash_flow(
-            api_wrapper, cash_flow_data, income_statement_data
-        )
+        cash_flow_metrics = analyze_stability_from_cash_flow(api_wrapper, cash_flow_data, income_statement_data)
         analysis.update(cash_flow_metrics)
 
     # Calculate overall assessments

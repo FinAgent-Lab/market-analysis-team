@@ -34,6 +34,7 @@ jobs:
           MILVUS_URL_RECAP=${{ vars.MILVUS_URL_RECAP }}
           MILVUS_DB_NAME_RECAP=${{ vars.MILVUS_DB_NAME_RECAP }}
           MILVUS_COLLECTION_NAME_RECAP=${{ vars.MILVUS_COLLECTION_NAME_RECAP }}
+          ALPHA_VANTAGE_API_KEY=${{ secrets.ALPHA_VANTAGE_API_KEY }}
 
           "@ | Out-File -FilePath .env -Encoding utf8
       
