@@ -12,7 +12,8 @@ from src.graph.nodes import (
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
     WeeklyReporterNode,
-    USFinancialAnalyzerNode
+    USFinancialAnalyzerNode,
+    GoogleSearcherNode
 )
 from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
@@ -73,7 +74,7 @@ def main(
     """
 
     graph_builder.add_node(NaverNewsSearcherNode())
-    # graph_builder.add_node(GoogleSearcherNode())
+    graph_builder.add_node(GoogleSearcherNode())
     graph_builder.add_node(ReportAssistantNode())
     graph_builder.add_node(ChosunRSSFeederNode())
     graph_builder.add_node(WSJEconomyRSSFeederNode())
