@@ -2,25 +2,20 @@ from dotenv import load_dotenv
 
 from dependency_injector.wiring import Provide, inject
 import uvicorn
-from apscheduler.schedulers.background import BackgroundScheduler
 
 from api.server import APIBuilder
 
 from src.graph.nodes import (
-    NaverNewsSearcherNode,
     RetrieveESGNode,
     ReportAssistantNode,
     ChosunRSSFeederNode,
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
-    WeeklyReporterNode,
 )
 from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
 from startup import Container
 from rich.console import Console
-
-from src.tasks.weekly_recap_scraper import scrape_jp_weekly_recap
 
 
 console = Console()

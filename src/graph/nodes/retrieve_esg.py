@@ -21,38 +21,44 @@ class RetrieveESGNode(Node):
             {
             "ticker": "[ticker symbol]",
             "company_name": "[company name]",
-            "environment_score": {
+            "total_esg_score": {
                 "score": [numeric score],
                 "risk_level": "[Negligible, Low, Medium, High, Severe]"
+            },
+            "environment_score": {
+                "score": [numeric score],
             },
             "social_score": {
                 "score": [numeric score],
-                "risk_level": "[Negligible, Low, Medium, High, Severe]"
             },
             "governance_score": {
                 "score": [numeric score],
-                "risk_level": "[Negligible, Low, Medium, High, Severe]"
             },
             "rating_year": [year as integer],
-            "rating_month": [month as integer]
+            "rating_month": [month as integer],
             }
 
-            Use the following criteria to determine risk levels from Sustainalytics scores (0-100, lower is better):
-            - 0-10: "Negligible"
-            - 10-20: "Low"
-            - 20-30: "Medium"
-            - 30-40: "High"
-            - 40+: "Severe"
+            Use the following criteria STRICTLY and EXACTLY to determine risk levels:
+
+            For total_esg_score:
+            - IF score >= 0 AND score < 10, THEN risk_level = "Negligible"
+            - IF score >= 10 AND score < 20, THEN risk_level = "Low" 
+            - IF score >= 20 AND score < 30, THEN risk_level = "Medium"
+            - IF score >= 30 AND score < 40, THEN risk_level = "High"
+            - IF score >= 40, THEN risk_level = "Severe"
 
             Critical rules:
             1. Return ONLY the JSON object with no other text, explanation, or commentary.
             2. Do NOT include backticks (```) or any markdown formatting around the JSON.
             3. Numeric values should be numbers without quotes (not strings).
-            4. For any score, calculate and include the corresponding risk level based on the criteria above.
-            5. Remember that Sustainalytics scores range from 0-100, where LOWER is BETTER (less risk).
-            6. If a value is unavailable or unknown, use the string "정보 없음" instead of null.
+            4. For each score, you MUST follow the exact risk level criteria specified above with no exceptions or deviations.
+            5. If a value is unavailable or unknown, use the string "정보 없음" instead of null.
+            6. NO ROUNDING or approximation when determining risk levels - use the exact score value and the exact boundary values in the criteria.
+            7. DOUBLE-CHECK each risk level assignment to ensure it exactly matches the criteria.
+            8. NEVER use your own judgment to adjust the risk levels - follow the criteria exactly as specified.
 
-            Remember: The supervisor node will handle all explanations and formatting for the end user. Your job is ONLY to provide the raw data in the specified JSON format.
+
+            Remember: The supervisor node will handle all explanations and formatting for the end user. Your job is ONLY to provide the raw data in the specified JSON format with STRICTLY CORRECT risk levels according to the criteria.
             """
         self.agent = None
         self.tools = [ESGDataTool()]
