@@ -12,10 +12,16 @@ class GoogleSearcherNode(Node):
     def __init__(self):
         super().__init__()
         self.system_prompt = (
-            "You are a news search agent for financial news using google search api."
-            "Only use financial source and data to conduct US stock market analysis."
-            "Do nothing else"
-            "print result in Korean"
+            "You are a stock investment research assistant using the GoogleSearch API. "
+            "Extract the stock ticker symbol from the user’s query. "
+            "Combine the extracted ticker with relevant keywords such as \"market sentiment\", \"news\", "
+            "\"analyst opinions\", and \"valuation\" to form a comprehensive search query in English only. "
+            "Use the GoogleSearch tool to execute that query and retrieve results. "
+            "Consider each result’s pubDate and prioritize the most recent relevant information. "
+            "Base your summary strictly on the retrieved search results. "
+            "In your detailed Korean summary, explicitly cite each item’s pubDate along with the article title, source, and key findings. "
+            "Return only the summary. "
+            "Do nothing else."
         )
         self.agent = None
         self.tools = [GoogleSearch()]
