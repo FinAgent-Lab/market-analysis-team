@@ -395,3 +395,24 @@ def growth_and_ratios_analysis(symbol='AAPL', limit=2):
         result["rd_intensity"] = None
 
     return {"growth_and_ratios_analysis_result": result}
+
+def get_stock_summary(symbol):
+    from src.graph.api_client import fetch_from_fmp
+    url = f"https://financialmodelingprep.com/api/v3/quote/{symbol}?apikey={YOUR_API_KEY}"
+    data = fetch_from_fmp(url)
+    if not data:
+        return {"message": f"{symbol}에 대한 요약 정보를 불러올 수 없습니다."}
+    
+    info = data[0]
+    return {
+        "symbol": info.get("symbol"),
+        "name": info.get("name"),
+        "price": info.get("price"),
+        "marketCap": info.get("marketCap"),
+        "peRatio": info.get("pe"),
+        "changesPercentage": info.get("changesPercentage"),
+        "dayHigh": info.get("dayHigh"),
+        "dayLow": info.get("dayLow"),
+        "yearHigh": info.get("yearHigh"),
+        "yearLow": info.get("yearLow"),
+    }

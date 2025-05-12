@@ -21,46 +21,78 @@ def classify_message(state):
     prompt = f"""
 사용자의 질문을 보고 호출할 Financial Modeling Prep API 함수를 판단해 JSON 형식으로 출력하세요.
 
-반드시 아래 규칙을 따르세요:
-
-1. "손익계산서" → {{"function": "get_income_statement", "symbol": "AAPL"}}
-2. "대차대조표" → {{"function": "get_balance_sheet", "symbol": "AAPL"}}
-3. "현금흐름표" → {{"function": "get_cash_flow_statement", "symbol": "AAPL"}}
-4. "재무보고서" → {{"function": "get_financial_reports", "symbol": "AAPL"}}
-5. "주요 지표" → {{"function": "get_key_metrics", "symbol": "AAPL"}}
-6. "재무 비율" → {{"function": "get_ratios", "symbol": "AAPL"}}
-7. "TTM 주요 지표" → {{"function": "get_key_metrics_ttm", "symbol": "AAPL"}}
-8. "TTM 재무 비율" → {{"function": "get_ratios_ttm", "symbol": "AAPL"}}
-9. "재무 점수" → {{"function": "get_financial_scores", "symbol": "AAPL"}}
-10. "소유자 수입" → {{"function": "get_owner_earnings", "symbol": "AAPL"}}
-11. "기업 가치" → {{"function": "get_enterprise_values", "symbol": "AAPL"}}
-12. "손익계산서 성장" → {{"function": "get_income_statement_growth", "symbol": "AAPL"}}
-13. "대차대조표 성장" → {{"function": "get_balance_sheet_growth", "symbol": "AAPL"}}
-14. "현금흐름표 성장" → {{"function": "get_cash_flow_growth", "symbol": "AAPL"}}
-15. "재무제표 성장" → {{"function": "get_financial_growth", "symbol": "AAPL"}}
-16. "보고된 손익계산서" → {{"function": "get_income_statement_as_reported", "symbol": "AAPL"}}
-17. "보고된 대차대조표" → {{"function": "get_balance_sheet_as_reported", "symbol": "AAPL"}}
-18. "보고된 현금흐름표" → {{"function": "get_cash_flow_as_reported", "symbol": "AAPL"}}
-19. "보고된 전체 재무제표" → {{"function": "get_financial_statement_full_as_reported", "symbol": "AAPL"}}
-20. "대차대조표 분석" 또는 "유동비율", "부채비율", "자기자본비율" 등 지표 분석이 포함된 질문 → {{"function": "balance_sheet_analysis", "symbol": "AAPL"}}
-21. "수익성 지표", "비용 비율", "주당 지표" 등 지표 분석이 포함된 질문 → {{"function": "income_statement_analysis", "symbol": "AAPL"}}
-22. "현금 분석" 재무재표 질문 → {{"function": "cash_flow_analysis", "symbol": "AAPL"}}
-23. "성장률 및 R&D 투자비율 분석" 질문 → {{"function": "growth_and_ratios_analysis", "symbol": "AAPL"}}
-
 다른 키워드나 알 수 없는 질문은 다음을 출력:
 {{"function": "fallback_node"}}
 
 ⚠️ 오직 JSON 형식만 출력하세요.
 입력: {user_input}
 """
-    response = gpt4o_mini.invoke([HumanMessage(content=prompt)])
-    content = response.content.strip().replace("```json", "").replace("```", "")
 
     try:
+        response = gpt4o_mini.invoke([HumanMessage(content=prompt)])
+        content = response.content.strip().replace("```json", "").replace("```", "")
+        print(f"[GPT 응답 원문] {content}")  # ✅ 실제 GPT 응답 확인
+
         result = json.loads(content)
-    except json.JSONDecodeError:
+
+        # ✅ 타입 확인
+        if not isinstance(result, dict):
+            print("[경고] GPT 응답이 dict 아님. fallback_node로 이동")
+            return {"function": "fallback_node"}
+
+        # ✅ 잘못된 함수명을 안전하게 매핑
+        raw_func = result.get("function", "")
+        func_map = {
+            "quote": "get_stock_summary",
+            "get_quote": "get_stock_summary",
+            "stock_info": "get_stock_summary",
+            "get_profile": "get_stock_summary",
+            "get_company_profile": "get_stock_summary",
+            "get_stock_quote": "get_stock_summary",
+        }
+        final_func = func_map.get(raw_func, raw_func)
+
+        # ✅ 안전한 함수 목록
+        valid_funcs = {
+            "get_income_statement",
+            "get_balance_sheet",
+            "get_cash_flow_statement",
+            "get_financial_reports",
+            "get_key_metrics",
+            "get_ratios",
+            "get_key_metrics_ttm",
+            "get_ratios_ttm",
+            "get_financial_scores",
+            "get_owner_earnings",
+            "get_enterprise_values",
+            "get_income_statement_growth",
+            "get_balance_sheet_growth",
+            "get_cash_flow_growth",
+            "get_financial_growth",
+            "get_income_statement_as_reported",
+            "get_balance_sheet_as_reported",
+            "get_cash_flow_as_reported",
+            "get_financial_statement_full_as_reported",
+            "balance_sheet_analysis",
+            "income_statement_analysis",
+            "cash_flow_analysis",
+            "growth_and_ratios_analysis",
+            "get_stock_summary",
+        }
+
+        if final_func not in valid_funcs:
+            print(f"[경고] 잘못된 함수명 '{final_func}' → fallback_node")
+            return {"function": "fallback_node"}
+
+        print(f"[INFO] classify 결과: function={final_func}")
+        return {"function": final_func}
+
+    except Exception as e:
+        print(f"[ERROR] classify_message 내부 예외: {e}")
         return {"function": "fallback_node"}
-    return result
+
+
+
 
 # ✅ fallback 노드 정의
 def fallback_node(state):
@@ -95,6 +127,7 @@ def create_agent_graph():
     graph.add_node("income_statement_analysis", lambda s: income_statement_analysis(s["symbol"]))
     graph.add_node("cash_flow_analysis", lambda s: cash_flow_analysis(s["symbol"]))
     graph.add_node("growth_and_ratios_analysis", lambda s: growth_and_ratios_analysis(s["symbol"]))
+    graph.add_node("get_stock_summary", lambda s: get_stock_summary(s["symbol"]))
     graph.add_node("fallback_node", fallback_node)
 
     # 엣지 연결
@@ -126,6 +159,7 @@ def create_agent_graph():
             "income_statement_analysis": "income_statement_analysis",
             "cash_flow_analysis": "cash_flow_analysis",
             "growth_and_ratios_analysis": "growth_and_ratios_analysis",
+            "get_stock_summary": "get_stock_summary",
             "fallback_node": "fallback_node"
         }
     )
