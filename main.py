@@ -2,20 +2,26 @@ from dotenv import load_dotenv
 
 from dependency_injector.wiring import Provide, inject
 import uvicorn
-
+from apscheduler.schedulers.background import BackgroundScheduler
 from api.server import APIBuilder
 
 from src.graph.nodes import (
-    RetrieveESGNode,
+    NaverNewsSearcherNode,
     ReportAssistantNode,
     ChosunRSSFeederNode,
+    RetrieveESGNode,
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
+    WeeklyReporterNode,
+    USFinancialAnalyzerNode,
+    GoogleSearcherNode,
 )
 from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
 from startup import Container
 from rich.console import Console
+
+from src.tasks.weekly_recap_scraper import scrape_jp_weekly_recap
 
 
 console = Console()
@@ -103,8 +109,8 @@ def main(
         scrape_jp_weekly_recap,
         "cron",
         hour="6,9,12,15,18",
-         minute=0,
-         args=[vector_store],
+        minute=0,
+        args=[vector_store],
     )
     scheduler.start()
 
