@@ -1,23 +1,19 @@
-"""Util that calls Google Search API.
-
-In order to set this up, follow instructions at:
-https://programmablesearchengine.google.com/
-"""
-
 import json
-from typing import Dict, List
 import urllib.request
 import urllib.parse
+from typing import Dict, List
 
 import aiohttp
+import numpy as np
 from langchain_core.utils import get_from_dict_or_env
 from pydantic import BaseModel, ConfigDict, SecretStr, model_validator
+from langchain_openai import OpenAIEmbeddings
 
 GOOGLE_API_URL = "https://www.googleapis.com/customsearch/v1"
 
 
 class GoogleSearchAPIWrapper(BaseModel):
-    """Wrapper for Google Custom Search API."""
+    """Wrapper for Google Custom Search API with relevance filtering using embeddings."""
 
     google_api_key: SecretStr
     google_cse_id: SecretStr
@@ -29,37 +25,32 @@ class GoogleSearchAPIWrapper(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def validate_environment(cls, values: Dict) -> Dict:
-        """Validate that api key and cse id exist in environment."""
         google_api_key = get_from_dict_or_env(
             values, "google_api_key", "GOOGLE_API_KEY"
         )
-        google_cse_id = get_from_dict_or_env(values, "google_cse_id", "GOOGLE_CSE_ID")
+        google_cse_id = get_from_dict_or_env(
+            values, "google_cse_id", "GOOGLE_CSE_ID"
+        )
         values["google_api_key"] = google_api_key
         values["google_cse_id"] = google_cse_id
-
         return values
 
     def raw_results(
         self,
         query: str,
     ) -> Dict:
-        """Get raw results from the Google Custom Search API."""
         api_key = self.google_api_key.get_secret_value()
         cse_id = self.google_cse_id.get_secret_value()
 
         params = {"key": api_key, "cx": cse_id, "q": query}
-
-        # Create a request with the URL and parameters
         url = f"{GOOGLE_API_URL}?{urllib.parse.urlencode(params)}"
         request = urllib.request.Request(url)
 
         try:
             with urllib.request.urlopen(request) as response:
-                response_code = response.getcode()
-                if response_code == 200:
+                if response.getcode() == 200:
                     return json.loads(response.read().decode("utf-8"))
-                else:
-                    raise Exception(f"Error Code: {response_code}")
+                raise Exception(f"Error Code: {response.getcode()}")
         except urllib.error.HTTPError as e:
             raise Exception(f"Error Code: {e.code}, Reason: {e.reason}")
 
@@ -67,66 +58,107 @@ class GoogleSearchAPIWrapper(BaseModel):
         self,
         query: str,
     ) -> List[Dict]:
-        """Run query through Google Search and return cleaned results.
-
-        Args:
-            query: The query to search for.
-
-        Returns:
-            A list of dictionaries containing the cleaned search results.
-        """
-        raw_search_results = self.raw_results(query)
-        if "items" not in raw_search_results:
+        raw = self.raw_results(query)
+        if "items" not in raw:
             return []
-        return self.clean_results(raw_search_results["items"])
+        return self.clean_results(raw["items"])
 
     async def raw_results_async(
         self,
         query: str,
     ) -> Dict:
-        """Get results from the Google Custom Search API asynchronously."""
         api_key = self.google_api_key.get_secret_value()
         cse_id = self.google_cse_id.get_secret_value()
-
         params = {"key": api_key, "cx": cse_id, "q": query}
-
         async with aiohttp.ClientSession() as session:
             async with session.get(GOOGLE_API_URL, params=params) as response:
                 if response.status == 200:
-                    data = await response.text()
-                    return json.loads(data)
-                else:
-                    raise Exception(f"Error {response.status}: {response.reason}")
+                    return json.loads(await response.text())
+                raise Exception(f"Error {response.status}: {response.reason}")
 
     async def results_async(
         self,
         query: str,
     ) -> List[Dict]:
-        """Get cleaned results from Google Custom Search API asynchronously."""
-        results_json = await self.raw_results_async(
-            query=query,
-        )
-        if "items" not in results_json:
+        raw = await self.raw_results_async(query)
+        if "items" not in raw:
             return []
-        return self.clean_results(results_json["items"])
+        return self.clean_results(raw["items"])
 
     def clean_results(self, results: List[Dict]) -> List[Dict]:
-        """Clean results from Google Custom Search API."""
-        clean_results = []
-        for result in results:
-            clean_result = {
-                "title": result.get("title", ""),
-                "link": result.get("link", ""),
-                "description": result.get("snippet", ""),
+        clean = []
+        for r in results:
+            item = {
+                "title": r.get("title", ""),
+                "link": r.get("link", ""),
+                "description": r.get("snippet", ""),
             }
+            if "pagemap" in r and "metatags" in r["pagemap"]:
+                for m in r["pagemap"]["metatags"]:
+                    if "og:site_name" in m:
+                        item["source"] = m["og:site_name"]
+                    if "article:published_time" in m:
+                        item["pubDate"] = m["article:published_time"]
+            clean.append(item)
+        return clean
 
-            # Add optional fields if they exist
-            if "pagemap" in result and "metatags" in result["pagemap"]:
-                for metatag in result["pagemap"]["metatags"]:
-                    if "og:site_name" in metatag:
-                        clean_result["source"] = metatag["og:site_name"]
-                    if "article:published_time" in metatag:
-                        clean_result["pubDate"] = metatag["article:published_time"]
+    def filtered_results(
+        self,
+        query: str,
+        embedding_model: str = "text-embedding-3-small",
+        top_n: int = 15
+    ) -> List[Dict]:
+        """Retrieve and rank search results by semantic similarity to the query."""
+        # 1) Retrieve base results
+        results = self.results(query)
+        if not isinstance(results, list) or not results:
+            return []
+        # 2) Prepare descriptions and filter empties
+        descriptions = [r.get("description", "") for r in results]
+        valid_indices = [i for i, desc in enumerate(descriptions) if desc]
+        if not valid_indices:
+            return []
+        valid_desc = [descriptions[i] for i in valid_indices]
+        valid_res = [results[i] for i in valid_indices]
+        # 3) Embed
+        embedder = OpenAIEmbeddings(model=embedding_model)
+        desc_embs = embedder.embed_documents(valid_desc)
+        query_emb = embedder.embed_query(query)
+        q_np = np.array(query_emb)
+        # 4) Compute cosine similarities
+        sims = []
+        for d in desc_embs:
+            d_np = np.array(d)
+            denom = np.linalg.norm(d_np) * np.linalg.norm(q_np)
+            sims.append((float(np.dot(d_np, q_np) / denom) if denom > 0 else 0.0))
+        # 5) Select top_n
+        top_idxs = sorted(range(len(sims)), key=lambda i: sims[i], reverse=True)[:top_n]
+        return [valid_res[i] for i in top_idxs]
 
-            clean_results.append(clean_result)
-        return clean_results
+    async def filtered_results_async(
+        self,
+        query: str,
+        embedding_model: str = "text-embedding-3-small",
+        top_n: int = 15
+    ) -> List[Dict]:
+        """Async version of filtered_results."""
+        results = await self.results_async(query)
+        if not isinstance(results, list) or not results:
+            return []
+        descriptions = [r.get("description", "") for r in results]
+        valid_indices = [i for i, desc in enumerate(descriptions) if desc]
+        if not valid_indices:
+            return []
+        valid_desc = [descriptions[i] for i in valid_indices]
+        valid_res = [results[i] for i in valid_indices]
+        embedder = OpenAIEmbeddings(model=embedding_model)
+        desc_embs = embedder.embed_documents(valid_desc)
+        query_emb = embedder.embed_query(query)
+        q_np = np.array(query_emb)
+        sims = []
+        for d in desc_embs:
+            d_np = np.array(d)
+            denom = np.linalg.norm(d_np) * np.linalg.norm(q_np)
+            sims.append((float(np.dot(d_np, q_np) / denom) if denom > 0 else 0.0))
+        top_idxs = sorted(range(len(sims)), key=lambda i: sims[i], reverse=True)[:top_n]
+        return [valid_res[i] for i in top_idxs]
