@@ -14,8 +14,8 @@ class GoogleSearcherNode(Node):
         self.system_prompt = (
             "You are a stock investment research assistant using the GoogleSearch API. "
             "Extract the stock ticker symbol from the user’s query. "
-            "Combine the extracted ticker with relevant keywords such as \"market sentiment\", \"news\", "
-            "\"analyst opinions\", and \"valuation\" to form a comprehensive search query in English only. "
+            'Combine the extracted ticker with relevant keywords such as "market sentiment", "news", '
+            '"analyst opinions", and "valuation" to form a comprehensive search query in English only. '
             "Use the GoogleSearch tool to execute that query and retrieve results. "
             "Consider each result’s pubDate and prioritize the most recent relevant information. "
             "Base your summary strictly on the retrieved search results. "

@@ -28,9 +28,7 @@ class GoogleSearchAPIWrapper(BaseModel):
         google_api_key = get_from_dict_or_env(
             values, "google_api_key", "GOOGLE_API_KEY"
         )
-        google_cse_id = get_from_dict_or_env(
-            values, "google_cse_id", "GOOGLE_CSE_ID"
-        )
+        google_cse_id = get_from_dict_or_env(values, "google_cse_id", "GOOGLE_CSE_ID")
         values["google_api_key"] = google_api_key
         values["google_cse_id"] = google_cse_id
         return values
@@ -106,7 +104,7 @@ class GoogleSearchAPIWrapper(BaseModel):
         self,
         query: str,
         embedding_model: str = "text-embedding-3-small",
-        top_n: int = 15
+        top_n: int = 15,
     ) -> List[Dict]:
         """Retrieve and rank search results by semantic similarity to the query."""
         # 1) Retrieve base results
@@ -139,7 +137,7 @@ class GoogleSearchAPIWrapper(BaseModel):
         self,
         query: str,
         embedding_model: str = "text-embedding-3-small",
-        top_n: int = 15
+        top_n: int = 15,
     ) -> List[Dict]:
         """Async version of filtered_results."""
         results = await self.results_async(query)
