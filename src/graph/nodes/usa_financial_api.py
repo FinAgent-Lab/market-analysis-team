@@ -2,6 +2,12 @@ import requests
 import pprint
 import os
 
+from dotenv import load_dotenv
+
+# .env 파일 로드
+load_dotenv()
+
+# 환경 변수 불러오기
 API_KEY = os.getenv("FINANCIAL_API_KEY")
 
 def get_income_statement(symbol='AAPL', limit=3):
