@@ -63,6 +63,7 @@ services:
       - ALPHA_VANTAGE_API_KEY=${ALPHA_VANTAGE_API_KEY}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - GOOGLE_CSE_ID=${GOOGLE_CSE_ID}
+      - FINANCIAL_API_KEY=${FINANCIAL_API_KEY}
     networks:
       - ai-network-ma
 
