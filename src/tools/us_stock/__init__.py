@@ -13,7 +13,6 @@ from .alpha_vantage_stability import (
 )
 from .alpha_vantage_formatters import format_financial_analysis
 
-
 # Integrate analysis functions
 def analyze_financial_data(api_wrapper, data: dict) -> dict:
     """Analyze financial statement data with focus on profitability and stability."""

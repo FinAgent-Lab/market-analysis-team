@@ -1,11 +1,17 @@
 """Util that calls Alpha Vantage API."""
 
 import time
+import logging
 from typing import Dict, Optional, Any
 import requests
 
 from langchain_core.utils import get_from_dict_or_env
 from pydantic import BaseModel, ConfigDict, SecretStr, model_validator
+
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 
 class AlphaVantageAPIWrapper(BaseModel):
@@ -35,10 +41,10 @@ class AlphaVantageAPIWrapper(BaseModel):
         Return None when conversion is not possible.
         """
         if (
-            value is None
-            or value == "None"
-            or value == ""
-            or (isinstance(value, str) and value.strip().lower() == "none")
+                value is None
+                or value == "None"
+                or value == ""
+                or (isinstance(value, str) and value.strip().lower() == "none")
         ):
             return None
         try:
@@ -47,7 +53,7 @@ class AlphaVantageAPIWrapper(BaseModel):
             return None
 
     def format_financial_value(
-        self, value: Any, include_dollar: bool = True, include_percent: bool = False
+            self, value: Any, include_dollar: bool = True, include_percent: bool = False
     ) -> str:
         """
         Format financial values.
@@ -61,8 +67,9 @@ class AlphaVantageAPIWrapper(BaseModel):
             if float_value is None:
                 return "No data"
 
+            # include_percent=True일 경우 100을 곱하지 않음
             if include_percent:
-                return f"{float_value * 100:.2f}%"
+                return f"{float_value:.2f}%"
             elif include_dollar:
                 return f"${float_value:,.2f}"
             else:
@@ -77,9 +84,9 @@ class AlphaVantageAPIWrapper(BaseModel):
 
         # Return from cache if available and not expired
         if (
-            cache_key in self.cache
-            and current_time - self.cache_timestamp.get(cache_key, 0)
-            < self.base_cache_time
+                cache_key in self.cache
+                and current_time - self.cache_timestamp.get(cache_key, 0)
+                < self.base_cache_time
         ):
             return self.cache[cache_key]
 
@@ -183,6 +190,44 @@ class AlphaVantageAPIWrapper(BaseModel):
 
         return self._get_cached_or_fetch(cache_key, fetch_sector_performance)
 
+    def log_raw_financial_metrics(self, profile: Dict) -> None:
+        """Log raw financial metrics for debugging."""
+        if not profile:
+            logger.info("No profile data available to log")
+            return
+
+        # Log important financial ratios
+        metrics_to_log = [
+            "ReturnOnEquityTTM",
+            "ReturnOnAssetsTTM",
+            "OperatingMarginTTM",
+            "ProfitMargin",
+            "QuarterlyEarningsGrowthYOY",
+            "QuarterlyRevenueGrowthYOY",
+            "DividendYield",
+            "EPS",
+            "ProfitMargin",
+            "GrossProfitTTM"
+        ]
+
+        logger.info("====== RAW FINANCIAL METRICS ======")
+        for metric in metrics_to_log:
+            if metric in profile:
+                raw_value = profile[metric]
+                float_value = self.safe_float_or_empty(raw_value)
+                logger.info(f"{metric}: Raw Value = {raw_value}, Float Value = {float_value}")
+
+                # For percentage metrics, show what happens if we multiply by 100
+                if metric in ["ReturnOnEquityTTM", "ReturnOnAssetsTTM", "OperatingMarginTTM", "ProfitMargin", "DividendYield"]:
+                    if float_value is not None:
+                        percentage_value = float_value * 100
+                        logger.info(f"{metric} as percentage (x100): {percentage_value:.2f}%")
+
+        # Log all keys in profile for discovery
+        logger.info("====== ALL AVAILABLE PROFILE KEYS ======")
+        for key in profile.keys():
+            logger.info(f"Available key: {key}")
+
     def analyze_financial_statements(self, ticker: str) -> Dict:
         """Analyze financial statements for a stock."""
         from . import analyze_financial_data
@@ -193,6 +238,9 @@ class AlphaVantageAPIWrapper(BaseModel):
         try:
             overview = self.get_company_overview(ticker)
             if "error" not in overview:
+                # Log raw data for debugging
+                self.log_raw_financial_metrics(overview)
+
                 result["profile"] = overview
                 result["company_name"] = overview.get("Name", "")
             else:

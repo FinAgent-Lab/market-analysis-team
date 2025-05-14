@@ -3,16 +3,18 @@ from dotenv import load_dotenv
 from dependency_injector.wiring import Provide, inject
 import uvicorn
 from apscheduler.schedulers.background import BackgroundScheduler
-
 from api.server import APIBuilder
 from src.graph.nodes.us_financial_fmg import StockInfoNode
 from src.graph.nodes import (
     NaverNewsSearcherNode,
     ReportAssistantNode,
     ChosunRSSFeederNode,
+    RetrieveESGNode,
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
     WeeklyReporterNode,
+    USFinancialAnalyzerNode,
+    GoogleSearcherNode,
 )
 from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
@@ -20,6 +22,7 @@ from startup import Container
 from rich.console import Console
 
 from src.tasks.weekly_recap_scraper import scrape_jp_weekly_recap
+
 
 console = Console()
 load_dotenv(override=True)
@@ -73,7 +76,8 @@ def main(
     """
 
     graph_builder.add_node(NaverNewsSearcherNode())
-    # graph_builder.add_node(GoogleSearcherNode())
+    graph_builder.add_node(GoogleSearcherNode())
+    graph_builder.add_node(RetrieveESGNode())
     graph_builder.add_node(ReportAssistantNode())
     graph_builder.add_node(ChosunRSSFeederNode())
     graph_builder.add_node(WSJEconomyRSSFeederNode())
@@ -85,7 +89,7 @@ def main(
     # graph_builder.add_node(HantooFinancialAnalyzerNode())
 
     # 미국 주식 분석 에이전트 노드 추가 (Alpha Vantage API 사용)
-    # graph_builder.add_node(USFinancialAnalyzerNode())
+    graph_builder.add_node(USFinancialAnalyzerNode())
 
     # vector_store = Container.vector_store_recap()
     # graph_builder.add_node(WeeklyReporterNode(vector_store))
