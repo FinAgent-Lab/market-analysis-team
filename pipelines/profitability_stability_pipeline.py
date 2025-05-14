@@ -22,7 +22,7 @@ class Pipeline:
 
     def __init__(self):
         self.name = "Market Analysis - Profitability & Stability Analyzer"
-        self.agent_name = "usfinancialstatementanalyzer"
+        self.agent_name = "usfinancialanalyzer"
         self.endpoint = f"http://{APISERVER_HOST}/api/{self.agent_name}"
         pass
 
