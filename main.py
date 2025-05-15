@@ -22,7 +22,7 @@ from startup import Container
 from rich.console import Console
 import os
 
-from tasks.weekly_recap_scraper import scrape_jp_weekly_recap
+from src.tasks.weekly_recap_scraper import scrape_jp_weekly_recap
 
 console = Console()
 load_dotenv(override=True)
