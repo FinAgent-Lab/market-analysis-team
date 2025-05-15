@@ -15,12 +15,12 @@ class Container(containers.DeclarativeContainer):
     supervisor_graph = providers.Singleton(SupervisorGraphBuilder)
 
     llm = providers.Singleton(
-        ChatOpenAI, 
-        model=os.getenv("MAIN_LLM_MODEL", "gpt-4o-mini"), 
+        ChatOpenAI,
+        model=os.getenv("MAIN_LLM_MODEL", "gpt-4o-mini"),
         temperature=0,
         base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
-        openai_api_key=os.getenv("OPENAI_API_KEY")
-        )
+        openai_api_key=os.getenv("OPENAI_API_KEY"),
+    )
 
     embeddings = providers.Singleton(OpenAIEmbeddings, model="text-embedding-3-small")
 

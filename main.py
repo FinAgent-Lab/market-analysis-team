@@ -84,7 +84,6 @@ def main(
     graph_builder.add_node(WSJMarketRSSFeederNode())
     graph_builder.add_node(StockInfoNode())
 
-
     # 한투 API 분석 에이전트 노드 주석 처리 (미국 주식 노드로 대체)
     # graph_builder.add_node(HantooFinancialAnalyzerNode())
 
@@ -95,7 +94,7 @@ def main(
         # 주간 리캡 스크래핑 노드 추가
         vector_store = Container.vector_store_recap()
         graph_builder.add_node(WeeklyReporterNode(vector_store))
-        
+
         # 주간 리캡 스크래핑 작업 예약
         scheduler = BackgroundScheduler(daemon=True)
         scheduler.add_job(
