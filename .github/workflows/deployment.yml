@@ -27,8 +27,11 @@ jobs:
         shell: pwsh
         run: |
           @"
+          PRODUCTION=${{ vars.PRODUCTION }}
           APISERVER_PORT_EXTERNAL=13100
           OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL=${{ vars.OPENAI_BASE_URL }}
+          MAIN_LLM_MODEL=${{ vars.MAIN_LLM_MODEL }}
           NAVER_CLIENT_ID=${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET }}
           MILVUS_URL_RECAP=${{ vars.MILVUS_URL_RECAP }}

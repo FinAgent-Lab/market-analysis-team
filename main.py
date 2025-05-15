@@ -20,9 +20,9 @@ from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
 from startup import Container
 from rich.console import Console
+import os
 
-from src.tasks.weekly_recap_scraper import scrape_jp_weekly_recap
-
+from tasks.weekly_recap_scraper import scrape_jp_weekly_recap
 
 console = Console()
 load_dotenv(override=True)
@@ -69,7 +69,7 @@ def main(
     에이전트 노드를 이곳에 추가해주세요.
     노드 추가 시, 다음의 기능을 동적으로 적용하게됩니다.
     - supervisor 노드에 멤버로 등록
-    - 노드 이름을 기반으로 API 엔드포인트 생성(예: SampleNone -> /api/sample)
+    - 노드 이름을 기반으로 API 엔드포인트 생성(예: SampleNode -> /api/sample)
     
     Example:
     graph_builder.add_node(NewNode())
@@ -91,8 +91,21 @@ def main(
     # 미국 주식 분석 에이전트 노드 추가 (Alpha Vantage API 사용)
     graph_builder.add_node(USFinancialAnalyzerNode())
 
-    # vector_store = Container.vector_store_recap()
-    # graph_builder.add_node(WeeklyReporterNode(vector_store))
+    if os.getenv("PRODUCTION", "false").lower() == "true":
+        # 주간 리캡 스크래핑 노드 추가
+        vector_store = Container.vector_store_recap()
+        graph_builder.add_node(WeeklyReporterNode(vector_store))
+        
+        # 주간 리캡 스크래핑 작업 예약
+        scheduler = BackgroundScheduler(daemon=True)
+        scheduler.add_job(
+            scrape_jp_weekly_recap,
+            "cron",
+            hour="6,9,12,15,18",
+            minute=0,
+            args=[vector_store],
+        )
+        scheduler.start()
 
     graph_builder.build()
 
@@ -105,16 +118,6 @@ def main(
             methods=["POST"],
             endpoint=node.invoke,
         )
-
-    # scheduler = BackgroundScheduler(daemon=True)
-    # scheduler.add_job(
-    #     scrape_jp_weekly_recap,
-    #     "cron",
-    #     hour="6,9,12,15,18",
-    #     minute=0,
-    #     args=[vector_store],
-    # )
-    # scheduler.start()
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
 

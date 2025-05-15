@@ -1,10 +1,10 @@
 from typing import Optional
 from pydantic import BaseModel
-
+import os
 
 class QueryRequest(BaseModel):
     query: str
-    model: Optional[str] = "gpt-4o-mini"
+    model: Optional[str] = os.getenv("MAIN_LLM_MODEL", "gpt-4o-mini")
     temperature: Optional[float] = 0.2
 
 
