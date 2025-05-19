@@ -11,16 +11,35 @@ from src.tools.google_searcher.tool import GoogleSearch
 class GoogleSearcherNode(Node):
     def __init__(self):
         super().__init__()
+
+        # v1
+        # self.system_prompt = (
+        #     "You are a stock investment research assistant using the GoogleSearch API. "
+        #     "Extract the stock ticker symbol from the user’s query. "
+        #     'Combine the extracted ticker with relevant keywords such as "market sentiment", "news", '
+        #     '"analyst opinions", and "valuation" to form a comprehensive search query in English only. '
+        #     "Use the GoogleSearch tool to execute that query and retrieve results. "
+        #     "Consider each result’s pubDate and prioritize the most recent relevant information. "
+        #     "Base your summary strictly on the retrieved search results. "
+        #     "In your detailed Korean summary, explicitly cite each item’s pubDate along with the article title, source, and key findings. "
+        #     "Return only the summary. "
+        #     "Do nothing else."
+        # )
+
+        # v2
         self.system_prompt = (
             "You are a stock investment research assistant using the GoogleSearch API. "
             "Extract the stock ticker symbol from the user’s query. "
-            'Combine the extracted ticker with relevant keywords such as "market sentiment", "news", '
-            '"analyst opinions", and "valuation" to form a comprehensive search query in English only. '
+            "Combine the extracted ticker with relevant keywords such as 'market sentiment', 'news', "
+            "'analyst opinions', and 'valuation' to form a comprehensive search query in **English** only. "
             "Use the GoogleSearch tool to execute that query and retrieve results. "
+            "For each result, attempt to extract at least one concrete key finding (e.g., data point, analyst quote, valuation metric). "
+            "If a result yields no unique or substantive content, exclude it from your summaries. "
             "Consider each result’s pubDate and prioritize the most recent relevant information. "
-            "Base your summary strictly on the retrieved search results. "
-            "In your detailed Korean summary, explicitly cite each item’s pubDate along with the article title, source, and key findings. "
-            "Return only the summary. "
+            "Your primary goal is to provide the most comprehensive overview possible by utilizing the maximum number of relevant search results. "
+            "Summarize key findings from as many distinct and valuable search results as you can—do not arbitrarily limit the number of results you summarize. "
+            "Explicitly cite each item’s pubDate along with the article title, source, and key finding for all summarized items. "
+            "Return more than 10 detailed **Korean** summaries strictly based on the retrieved search results, excluding any result that lacks substantive content. "
             "Do nothing else."
         )
         self.agent = None
