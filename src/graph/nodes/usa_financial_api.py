@@ -1,5 +1,4 @@
 import requests
-import pprint
 import os
 
 from dotenv import load_dotenv
@@ -194,7 +193,7 @@ def balance_sheet_analysis(symbol='AAPL', limit=3):
     try:
         ratios['Current Ratio'] = round(
             balance_data['totalCurrentAssets'] / balance_data['totalCurrentLiabilities'], 2)
-    except:
+    except Exception:
         ratios['Current Ratio'] = None
 
     try:
@@ -202,23 +201,23 @@ def balance_sheet_analysis(symbol='AAPL', limit=3):
             (balance_data['cashAndCashEquivalents'] +
              balance_data['netReceivables'] +
              balance_data['shortTermInvestments']) / balance_data['totalCurrentLiabilities'], 2)
-    except:
+    except Exception:
         ratios['Quick Ratio'] = None
 
     # 레버리지
     try:
         ratios['Debt to Equity'] = round(balance_data['totalLiabilities'] / balance_data['totalEquity'], 2)
-    except:
+    except Exception:
         ratios['Debt to Equity'] = None
 
     try:
         ratios['Equity Ratio'] = round(balance_data['totalEquity'] / balance_data['totalAssets'], 2)
-    except:
+    except Exception:
         ratios['Equity Ratio'] = None
 
     try:
         ratios['Net Debt to Equity'] = round(balance_data['netDebt'] / balance_data['totalEquity'], 2)
-    except:
+    except Exception:
         ratios['Net Debt to Equity'] = None
 
     return {"balance_sheet_ratios": ratios}
@@ -241,7 +240,7 @@ def income_statement_analysis(symbol='AAPL', limit=3):
 
     try:
         revenue = float(revenue)
-    except:
+    except Exception:
         return {"error": "revenue 값이 유효하지 않습니다."}
 
     if revenue == 0:
@@ -250,34 +249,58 @@ def income_statement_analysis(symbol='AAPL', limit=3):
     result = {}
 
     # 수익성 지표
-    try: result["gross_profit_margin"] = round(data.get("grossProfit", 0) / revenue * 100, 2)
-    except: pass
-    try: result["operating_margin"] = round(data.get("operatingIncome", 0) / revenue * 100, 2)
-    except: pass
-    try: result["net_profit_margin"] = round(data.get("netIncome", 0) / revenue * 100, 2)
-    except: pass
-    try: result["ebitda_margin"] = round(data.get("ebitda", 0) / revenue * 100, 2)
-    except: pass
-    try: result["pretax_margin"] = round(data.get("incomeBeforeTax", 0) / revenue * 100, 2)
-    except: pass
+    try:
+        result["gross_profit_margin"] = round(data.get("grossProfit", 0) / revenue * 100, 2)
+    except Exception:
+        pass
+    try:
+        result["operating_margin"] = round(data.get("operatingIncome", 0) / revenue * 100, 2)
+    except Exception:
+        pass
+    try:
+        result["net_profit_margin"] = round(data.get("netIncome", 0) / revenue * 100, 2)
+    except Exception:
+        pass
+    try:
+        result["ebitda_margin"] = round(data.get("ebitda", 0) / revenue * 100, 2)
+    except Exception:
+        pass
+    try:
+        result["pretax_margin"] = round(data.get("incomeBeforeTax", 0) / revenue * 100, 2)
+    except Exception:
+        pass
 
     # 비용 비율
-    try: result["rd_intensity"] = round(data.get("researchAndDevelopmentExpenses", 0) / revenue * 100, 2)
-    except: pass
-    try: result["sga_ratio"] = round(data.get("sellingGeneralAndAdministrativeExpenses", 0) / revenue * 100, 2)
-    except: pass
-    try: result["tax_rate"] = round(data.get("incomeTaxExpense", 0) / data.get("incomeBeforeTax", 1) * 100, 2)
-    except: pass
-    try: result["depreciation_ratio"] = round(data.get("depreciationAndAmortization", 0) / revenue * 100, 2)
-    except: pass
+    try:
+        result["rd_intensity"] = round(data.get("researchAndDevelopmentExpenses", 0) / revenue * 100, 2)
+    except Exception:
+        pass
+    try:
+        result["sga_ratio"] = round(data.get("sellingGeneralAndAdministrativeExpenses", 0) / revenue * 100, 2)
+    except Exception:
+        pass
+    try:
+        result["tax_rate"] = round(data.get("incomeTaxExpense", 0) / data.get("incomeBeforeTax", 1) * 100, 2)
+    except Exception:
+        pass
+    try:
+        result["depreciation_ratio"] = round(data.get("depreciationAndAmortization", 0) / revenue * 100, 2)
+    except Exception:
+        pass
 
     # 주당 지표
-    try: result["eps"] = round(data.get("netIncome", 0) / data.get("weightedAverageShsOut", 1), 2)
-    except: pass
-    try: result["eps_diluted"] = round(data.get("netIncome", 0) / data.get("weightedAverageShsOutDil", 1), 2)
-    except: pass
-    try: result["revenue_per_share"] = round(data.get("revenue", 0) / data.get("weightedAverageShsOut", 1), 2)
-    except: pass
+    try:
+        result["eps"] = round(data.get("netIncome", 0) / data.get("weightedAverageShsOut", 1), 2)
+    except Exception:
+        pass
+    try:
+        result["eps_diluted"] = round(data.get("netIncome", 0) / data.get("weightedAverageShsOutDil", 1), 2)
+    except Exception:
+        pass
+    try:
+        result["revenue_per_share"] = round(data.get("revenue", 0) / data.get("weightedAverageShsOut", 1), 2)
+    except Exception:
+        pass
 
     return {"income_statement_analysis_result": result}
 
@@ -309,19 +332,19 @@ def cash_flow_analysis(symbol='AAPL'):
     try:
         # 잉여현금흐름 (Free Cash Flow)
         result["free_cash_flow"] = round(operating_cf - capital_expend, 2)
-    except:
+    except Exception:
         pass
 
     try:
         # 영업현금흐름 마진
         result["operating_cash_flow_margin"] = round(operating_cf / revenue * 100, 2)
-    except:
+    except Exception:
         pass
 
     try:
         # 순이익 대비 현금 창출 비율
         result["cash_conversion_ratio"] = round(operating_cf / net_income, 2)
-    except:
+    except Exception:
         pass
 
     try:
@@ -336,19 +359,19 @@ def cash_flow_analysis(symbol='AAPL'):
 
         # 재무활동 비중
         result["financing_cf_ratio"] = round(financing_cf / total_cash_flow * 100, 2)
-    except:
+    except Exception:
         pass
 
     try:
         # 영업현금흐름 대비 자본적지출 비율
         result["capex_to_operating_cf"] = round(capital_expend / operating_cf, 2)
-    except:
+    except Exception:
         pass
 
     try:
         # 순이익 대비 자본적지출 비율
         result["capex_to_net_income"] = round(capital_expend / net_income, 2)
-    except:
+    except Exception:
         pass
 
     return {"cash_flow_analysis_result": result}
@@ -376,7 +399,7 @@ def growth_and_ratios_analysis(symbol='AAPL', limit=2):
         result["revenue_growth_rate"] = round(
             (current["revenue"] - previous["revenue"]) / previous["revenue"] * 100, 2
         )
-    except:
+    except Exception:
         result["revenue_growth_rate"] = None
 
     # EPS 및 EPS 성장률
@@ -385,20 +408,20 @@ def growth_and_ratios_analysis(symbol='AAPL', limit=2):
         previous_eps = previous["netIncome"] / previous["weightedAverageShsOut"]
         result["eps"] = round(current_eps, 2)
         result["eps_growth_rate"] = round((current_eps - previous_eps) / previous_eps * 100, 2)
-    except:
+    except Exception:
         result["eps_growth_rate"] = None
 
     # R&D 투자비율 (현재 연도 기준)
     try:
         result["rd_intensity"] = round(current["researchAndDevelopmentExpenses"] / current["revenue"] * 100, 2)
-    except:
+    except Exception:
         result["rd_intensity"] = None
 
     return {"growth_and_ratios_analysis_result": result}
 
 def get_stock_summary(symbol):
     from src.graph.api_client import fetch_from_fmp
-    url = f"https://financialmodelingprep.com/api/v3/quote/{symbol}?apikey={YOUR_API_KEY}"
+    url = f"https://financialmodelingprep.com/api/v3/quote/{symbol}?apikey={API_KEY}"
     data = fetch_from_fmp(url)
     if not data:
         return {"message": f"{symbol}에 대한 요약 정보를 불러올 수 없습니다."}
