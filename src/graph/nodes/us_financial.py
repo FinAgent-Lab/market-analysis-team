@@ -53,6 +53,15 @@ class USFinancialAnalyzerNode(Node):
         """현재 시간을 ISO 형식 문자열로 반환합니다."""
         return datetime.datetime.utcnow().isoformat()
 
+    def _create_default_llm(self) -> ChatOpenAI:
+        """환경변수를 사용하여 기본 LLM을 생성합니다."""
+        return ChatOpenAI(
+            model=os.getenv("MAIN_LLM_MODEL", "gpt-4o-mini"),
+            temperature=0,
+            base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+            openai_api_key=os.getenv("OPENAI_API_KEY"),
+        )
+
     # LangSmith 추적 데코레이터 적용
     @trace_run(name="us_financial_analyzer_run")
     def _run(self, state: dict) -> Command:
@@ -180,7 +189,7 @@ class USFinancialAnalyzerNode(Node):
             agent = self.agent
             if agent is None:
                 self.logger.debug("직접 호출을 위한 새 에이전트 생성 중")
-                default_llm = ChatOpenAI(model=self.DEFAULT_LLM_MODEL)
+                default_llm = self._create_default_llm()
 
                 agent = create_react_agent(
                     default_llm,
@@ -190,10 +199,10 @@ class USFinancialAnalyzerNode(Node):
 
             # Set LLM in tool if needed
             if not hasattr(self.tools[0], "llm") or self.tools[0].llm is None:
-                default_llm = ChatOpenAI(model=self.DEFAULT_LLM_MODEL)
+                default_llm = self._create_default_llm()
                 self.tools[0].llm = default_llm
                 self.logger.debug(
-                    f"금융 도구에 기본 LLM 설정: {self.DEFAULT_LLM_MODEL}"
+                    f"금융 도구에 기본 LLM 설정: {os.getenv('MAIN_LLM_MODEL', 'gpt-4o-mini')}"
                 )
 
             # Execute agent
