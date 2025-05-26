@@ -15,13 +15,6 @@ services:
       - OPENAI_API_KEY=0p3n-w3bu!
     volumes:
       - openwebui-data-ma:/app/backend/data
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
     depends_on:
       - pipelines-ma
     networks:
