@@ -28,6 +28,4 @@ Your task is to coordinate these workers to fulfill the user's request, based on
 """
 
 
-LANGFUSE_PROMPT_MAPPER = {
-    "supervisornode": "supervisor-ma"
-}
+LANGFUSE_PROMPT_MAPPER = {"supervisornode": "supervisor-ma"}

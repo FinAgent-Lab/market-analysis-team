@@ -37,7 +37,7 @@ class SupervisorGraphBuilder(BuilderABC):
         self._graph = None
         self._node_list = []
         # TODO: OPENAI 라이브러리 처리
-        
+
         self.langfuse_enabled = os.getenv("LANGFUSE_ENABLED", "false").lower() == "true"
         if self.langfuse_enabled:
             self._langfuse_handler = CallbackHandler(
@@ -71,7 +71,7 @@ class SupervisorGraphBuilder(BuilderABC):
 
         self.logger.info(f"Executing graph with state: {state}")
         assert self._graph is not None, "Graph is not built"
-        
+
         result = (
             self._graph.invoke(state, config={"callbacks": [self._langfuse_handler]})
             if self.langfuse_enabled

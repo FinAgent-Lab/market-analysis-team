@@ -10,19 +10,18 @@ from src.utils.const import PROMPT_SUPERVISOR, LANGFUSE_PROMPT_MAPPER
 
 
 class SupervisorNode(Node):
-
     def __init__(self):
         super().__init__()
         self.members = []
         self.system_prompt_template = PROMPT_SUPERVISOR
-        
+
         self.langfuse_enabled = os.getenv("LANGFUSE_ENABLED", "false").lower() == "true"
         if self.langfuse_enabled:
             self.langfuse = Langfuse(
                 public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
                 secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
                 host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com"),
-                )
+            )
         else:
             self.langfuse = None
 
@@ -32,7 +31,7 @@ class SupervisorNode(Node):
             langfuse_prompt = self.langfuse.get_prompt(
                 name=LANGFUSE_PROMPT_MAPPER[self.__class__.__name__.lower()],
                 label="production",
-                cache_ttl_seconds=0
+                cache_ttl_seconds=0,
             ).get_langchain_prompt()
         else:
             langfuse_prompt = None
