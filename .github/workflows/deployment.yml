@@ -17,7 +17,7 @@ on:
 jobs:
   deploy:
     name: Deploy to Self-Hosted Runner
-    runs-on: self-hosted
+    runs-on: Windows
     
     steps:
       - name: Checkout code

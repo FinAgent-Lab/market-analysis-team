@@ -3,6 +3,8 @@ import os
 from dependency_injector import containers, providers
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_milvus import Milvus
+from langfuse import Langfuse
+from langfuse.callback import CallbackHandler
 
 from src.graph.builder import SupervisorGraphBuilder
 from src.utils.logger import setup_logger
@@ -34,7 +36,7 @@ class Container(containers.DeclarativeContainer):
         collection_name=os.getenv("MILVUS_COLLECTION_NAME_RECAP", "weekly_recap"),
         auto_id=True,
     )
-
+ 
     # app = providers.Factory(APIBuilder)
     # for node in supervisor_graph.get_nodes():
     #     app.add_route(f"/{node.name.lower().replace('node', '')}", "POST", lambda x: node.invoke(x))
