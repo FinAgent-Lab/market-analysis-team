@@ -16,7 +16,7 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to Self-Hosted Runner
+    name: Deploy to Finlab-1
     runs-on: finlab-1
     
     steps:
@@ -72,15 +72,15 @@ jobs:
       
       - name: Build and tag Docker images
         run: |
-          docker-compose -f docker-compose.prod.yaml build backend-ma
+          docker compose -f docker-compose.prod.yaml build backend-ma
       
       - name: Stop running containers
         run: |
-          docker-compose -f docker-compose.prod.yaml down || true
+          docker compose -f docker-compose.prod.yaml down || true
       
       - name: Start Docker Compose services
         run: |
-          docker-compose -f docker-compose.prod.yaml up -d --remove-orphans
+          docker compose -f docker-compose.prod.yaml up -d --remove-orphans
       
       - name: Check service health
         run: |
@@ -157,7 +157,7 @@ jobs:
           
           if [ "$health_check_passed" = false ]; then
             echo "❌ 서비스 상태 확인 실패 - 로그 출력"
-            docker-compose -f docker-compose.prod.yaml logs --tail=50
+            docker compose -f docker-compose.prod.yaml logs --tail=50
             exit 1
           fi
           
