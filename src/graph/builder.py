@@ -1,8 +1,11 @@
+import os
 from abc import ABC, abstractmethod
 from typing import Any
 from typing_extensions import Self
 
 from langgraph.graph import StateGraph, START
+from langfuse.callback import CallbackHandler
+
 from src.graph.nodes.base import Node
 from src.graph.nodes import (
     SupervisorNode,
@@ -35,6 +38,16 @@ class SupervisorGraphBuilder(BuilderABC):
         self._node_list = []
         # TODO: OPENAI 라이브러리 처리
 
+        self.langfuse_enabled = os.getenv("LANGFUSE_ENABLED", "false").lower() == "true"
+        if self.langfuse_enabled:
+            self._langfuse_handler = CallbackHandler(
+                public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+                secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
+                host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com"),
+            )
+        else:
+            self._langfuse_handler = None
+
     def build(self) -> Self:
         self.logger.info("Building graph...")
         self._builder = StateGraph(SupervisorState)
@@ -58,7 +71,13 @@ class SupervisorGraphBuilder(BuilderABC):
 
         self.logger.info(f"Executing graph with state: {state}")
         assert self._graph is not None, "Graph is not built"
-        result = self._graph.invoke(state)
+
+        result = (
+            self._graph.invoke(state, config={"callbacks": [self._langfuse_handler]})
+            if self.langfuse_enabled
+            else self._graph.invoke(state)
+        )
+
         self.logger.info(f"Execution completed with result: {result}")
         return result
 

@@ -27,6 +27,7 @@ dependencies = [
     "uvicorn>=0.34.0",
     "opik==1.7.9",
     "yfinance==0.2.59",
+    "langfuse>=2.60.6",
 ]
 
 [dependency-groups]
