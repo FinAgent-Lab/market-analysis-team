@@ -2,7 +2,6 @@ from dotenv import load_dotenv
 
 from dependency_injector.wiring import Provide, inject
 import uvicorn
-from apscheduler.schedulers.background import BackgroundScheduler
 from api.server import APIBuilder
 from src.graph.nodes.us_financial_fmg import StockInfoNode
 from src.graph.nodes import (
@@ -12,7 +11,6 @@ from src.graph.nodes import (
     RetrieveESGNode,
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
-    WeeklyReporterNode,
     USFinancialAnalyzerNode,
     GoogleSearcherNode,
 )
@@ -22,7 +20,6 @@ from startup import Container
 from rich.console import Console
 import os
 
-from src.tasks.weekly_recap_scraper import scrape_jp_weekly_recap
 
 console = Console()
 load_dotenv(override=True)
