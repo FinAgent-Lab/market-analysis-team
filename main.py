@@ -82,7 +82,7 @@ def main(
     """
 
     graph_builder.add_node(NaverNewsSearcherNode())
-    graph_builder.add_node(GoogleSearcherNode())
+    # graph_builder.add_node(GoogleSearcherNode())
     graph_builder.add_node(RetrieveESGNode())
     graph_builder.add_node(ReportAssistantNode())
     # graph_builder.add_node(WeeklyReporterNode())
@@ -96,7 +96,7 @@ def main(
     # graph_builder.add_node(HantooFinancialAnalyzerNode())
 
     # 미국 주식 분석 에이전트 노드 추가 (Alpha Vantage API 사용)
-    graph_builder.add_node(USFinancialAnalyzerNode())
+    # graph_builder.add_node(USFinancialAnalyzerNode())
 
     # # 주간 리포트 스크래핑 스케쥴러
     # if os.getenv("PRODUCTION", "false").lower() == "true":
