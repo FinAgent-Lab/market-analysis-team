@@ -9,7 +9,6 @@ load_dotenv()
 # 환경 변수 불러오기
 API_KEY = os.getenv("FINANCIAL_API_KEY")
 
-
 def get_income_statement(symbol='AAPL'):
     print("손익계산서 Agent 호출")
     url = f"https://financialmodelingprep.com/stable/income-statement?symbol={symbol}&apikey={API_KEY}"
