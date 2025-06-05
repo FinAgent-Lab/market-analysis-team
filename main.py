@@ -58,7 +58,7 @@ logo = """
 def main(
     graph_builder: SupervisorGraphBuilder = Provide[Container.supervisor_graph],
 ):
-    console.print(logo)
+    # console.print(logo)
     logger.info("Starting Market Analysis Agent service...")
 
     ## 그래프 빌더
@@ -85,23 +85,23 @@ def main(
     # graph_builder.add_node(HantooFinancialAnalyzerNode())
 
     # 미국 주식 분석 에이전트 노드 추가 (Alpha Vantage API 사용)
-    graph_builder.add_node(USFinancialAnalyzerNode())
+    # graph_builder.add_node(USFinancialAnalyzerNode())
 
-    if os.getenv("PRODUCTION", "false").lower() == "true":
-        # 주간 리캡 스크래핑 노드 추가
-        vector_store = Container.vector_store_recap()
-        graph_builder.add_node(WeeklyReporterNode(vector_store))
+    # if os.getenv("PRODUCTION", "false").lower() == "true":
+    #     # 주간 리캡 스크래핑 노드 추가
+    #     vector_store = Container.vector_store_recap()
+    #     graph_builder.add_node(WeeklyReporterNode(vector_store))
 
-        # 주간 리캡 스크래핑 작업 예약
-        scheduler = BackgroundScheduler(daemon=True)
-        scheduler.add_job(
-            scrape_jp_weekly_recap,
-            "cron",
-            hour="6,9,12,15,18",
-            minute=0,
-            args=[vector_store],
-        )
-        scheduler.start()
+    #     # 주간 리캡 스크래핑 작업 예약
+    #     scheduler = BackgroundScheduler(daemon=True)
+    #     scheduler.add_job(
+    #         scrape_jp_weekly_recap,
+    #         "cron",
+    #         hour="6,9,12,15,18",
+    #         minute=0,
+    #         args=[vector_store],
+    #     )
+    #     scheduler.start()
 
     graph_builder.build()
 
@@ -120,5 +120,6 @@ def main(
 
 if __name__ == "__main__":
     container = Container()
-    container.wire(modules=[__name__, "api.route", "src.tasks.weekly_recap_scraper"])
+    container.wire(modules=[__name__, "api.route"])
+    # container.wire(modules=[__name__, "api.route", "src.tasks.weekly_recap_scraper"])
     main()
