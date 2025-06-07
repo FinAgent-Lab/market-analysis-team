@@ -80,7 +80,7 @@ def main(
     graph_builder.add_node(GoogleSearcherNode())
     graph_builder.add_node(RetrieveESGNode())
     graph_builder.add_node(ReportAssistantNode())
-    graph_builder.add_node(WeeklyReporterNode())
+    # graph_builder.add_node(WeeklyReporterNode())
     graph_builder.add_node(ChosunRSSFeederNode())
     graph_builder.add_node(WSJEconomyRSSFeederNode())
     graph_builder.add_node(WSJMarketRSSFeederNode())
@@ -92,23 +92,24 @@ def main(
     # 미국 주식 분석 에이전트 노드 추가 (Alpha Vantage API 사용)
     graph_builder.add_node(USFinancialAnalyzerNode())
 
-    if os.getenv("PRODUCTION", "false").lower() == "true":
-        # 주간 리캡 스크래핑 노드 추가
-        vector_store = Container.vector_store_recap()
-        graph_builder.add_node(WeeklyReporterNode(vector_store))
+    # # 주간 리포트 스크래핑 스케쥴러
+    # if os.getenv("PRODUCTION", "false").lower() == "true":
+    #     # 주간 리캡 스크래핑 노드 추가
+    #     vector_store = Container.vector_store_recap()
+    #     graph_builder.add_node(WeeklyReporterNode(vector_store))
 
-        # 주간 리캡 스크래핑 작업 예약
-        scheduler = BackgroundScheduler(daemon=True)
-        scheduler.add_job(
-            scrape_jp_weekly_recap,
-            "cron",
-            hour="6,9,12,15,18",
-            minute=0,
-            args=[vector_store],
-        )
-        scheduler.start()
+    #     # 주간 리캡 스크래핑 작업 예약
+    #     scheduler = BackgroundScheduler(daemon=True)
+    #     scheduler.add_job(
+    #         scrape_jp_weekly_recap,
+    #         "cron",
+    #         hour="6,9,12,15,18",
+    #         minute=0,
+    #         args=[vector_store],
+    #     )
+    #     scheduler.start()
 
-    graph_builder.build()
+    # graph_builder.build()
 
     ## API 서버 빌더
     api_builder = APIBuilder()
