@@ -11,7 +11,7 @@ from src.graph.nodes import (
     ReportAssistantNode,
     ChosunRSSFeederNode,
     RetrieveESGNode,
-#     WeeklyReporterNode,
+    # WeeklyReporterNode,
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
     USFinancialAnalyzerNode,
@@ -19,7 +19,7 @@ from src.graph.nodes import (
 )
 from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
-from src.tasks.weekly_recap_scraper import scrape_jp_weekly_recap
+# from src.tasks.weekly_recap_scraper import scrape_jp_weekly_recap
 from startup import Container
 from rich.console import Console
 # import os
