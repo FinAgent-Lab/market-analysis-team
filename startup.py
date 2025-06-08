@@ -24,6 +24,7 @@ class Container(containers.DeclarativeContainer):
 
     embeddings = providers.Singleton(OpenAIEmbeddings, model="text-embedding-3-small")
 
+    ## TODO: Milvus가 아닌 supabsae로 변경 필요요
     ## Vector DB 초기화 비활성화(Milvus 연동 비활성화)
     # vector_store_recap = providers.Singleton(
     #     Milvus,
