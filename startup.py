@@ -2,7 +2,7 @@ import os
 
 from dependency_injector import containers, providers
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_milvus import Milvus
+# from langchain_milvus import Milvus
 
 from src.graph.builder import SupervisorGraphBuilder
 from src.utils.logger import setup_logger
