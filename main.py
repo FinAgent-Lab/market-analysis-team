@@ -19,6 +19,7 @@ from src.graph.nodes import (
 )
 from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
+
 # from src.tasks.weekly_recap_scraper import scrape_jp_weekly_recap
 from startup import Container
 from rich.console import Console
@@ -84,7 +85,7 @@ def main(
     graph_builder.add_node(ChosunRSSFeederNode())
     graph_builder.add_node(WSJEconomyRSSFeederNode())
     graph_builder.add_node(WSJMarketRSSFeederNode())
-    graph_builder.add_node(StockInfoNode())   # TODO: 종합 처리 기능 적용 시 주석 해제
+    graph_builder.add_node(StockInfoNode())  # TODO: 종합 처리 기능 적용 시 주석 해제
 
     # 한투 API 분석 에이전트 노드 주석 처리 (미국 주식 노드로 대체)
     # graph_builder.add_node(HantooFinancialAnalyzerNode())
@@ -126,5 +127,11 @@ def main(
 
 if __name__ == "__main__":
     container = Container()
-    container.wire(modules=[__name__, "api.route", "src.tasks.weekly_recap_scraper"])
+    container.wire(
+        modules=[
+            __name__,
+            "api.route",
+            # "src.tasks.weekly_recap_scraper"
+        ]
+    )
     main()
