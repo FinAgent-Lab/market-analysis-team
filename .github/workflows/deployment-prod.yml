@@ -20,11 +20,6 @@ jobs:
     runs-on: finlab-1
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          clean: true
-      
       - name: Fix permissions and clean Python cache
         run: |
           # 현재 사용자에게 전체 권한 부여
@@ -36,6 +31,11 @@ jobs:
           
           # 권한 확인
           ls -la
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          clean: true
 
       - name: Install required tools
         run: |
