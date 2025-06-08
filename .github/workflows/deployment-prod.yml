@@ -64,6 +64,14 @@ jobs:
           LANGFUSE_PUBLIC_KEY=${{ secrets.LANGFUSE_PUBLIC_KEY }}
           LANGFUSE_HOST=${{ vars.LANGFUSE_HOST }}
           EOF
+
+          UID=$(id -u)
+          GID=$(id -g)
+          USER_NAME=$(whoami)
+
+          echo "USER_NAME: $USER_NAME"
+          echo "UID=$UID" >> .env
+          echo "GID=$GID" >> .env
       
     #   - name: Login to GitHub Container Registry
     #     uses: docker/login-action@v2
