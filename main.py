@@ -110,7 +110,7 @@ def main(
     #     )
     #     scheduler.start()
 
-    # graph_builder.build()
+    graph_builder.build()
 
     ## API 서버 빌더
     api_builder = APIBuilder()
