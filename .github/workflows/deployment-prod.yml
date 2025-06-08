@@ -2,7 +2,7 @@ name: Deploy to Self-Hosted Runner
 
 on:
   push:
-    branches: [ dev, develop ]
+    branches: [ dev, develop, fix/* ]
 #   workflow_dispatch:
 #     inputs:
 #       environment:
@@ -22,7 +22,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          clean: true
       
+      - name: Fix permissions and clean Python cache
+        run: |
+          # 현재 사용자에게 전체 권한 부여
+          sudo chown -R $(whoami):$(whoami) .
+          
+          # Python 캐시 파일들 삭제
+          find . -name "*.pyc" -delete || true
+          find . -name "__pycache__" -type d -exec rm -rf {} + || true
+          
+          # 권한 확인
+          ls -la
+
       - name: Install required tools
         run: |
           # jq와 curl이 설치되어 있는지 확인하고 없으면 설치
