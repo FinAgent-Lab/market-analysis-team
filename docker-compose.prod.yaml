@@ -14,12 +14,12 @@ services:
       - OPENAI_API_BASE_URL=http://pipelines-ma:9099
       - OPENAI_API_KEY=0p3n-w3bu!
     volumes:
-      - openwebui-data-ma:/app/backend/data:rw
+      - openwebui-data-ma:/app/backend/data
     depends_on:
       - pipelines-ma
     networks:
       - finlab-net
-    user: "${UID}:${GID}"
+    # user: "${UID}:${GID}"
 
   # Pipelines - OpenWebUI 플러그인 프레임워크
   pipelines-ma:
@@ -30,17 +30,17 @@ services:
       - "9099"
     volumes:
       # - pipelines-data:/app/pipelines
-      - ./pipelines:/app/pipelines:rw
+      - ./pipelines:/app/pipelines
     environment:
       - APISERVER_HOST=backend-ma:8000
       - PIPELINES_DIR=/app/pipelines
       # 필요한 경우 특정 파이프라인 URL 추가 (주석 해제 후 사용)
       # - PIPELINES_URLS=https://github.com/open-webui/pipelines/blob/main/examples/filters/detoxify_filter_pipeline.py
-      - PYTHONDONTWRITEBYTECODE=1
-      - PYTHONPYCACHEPREFIX=/tmp
+      # - PYTHONDONTWRITEBYTECODE=1
+      # - PYTHONPYCACHEPREFIX=/tmp
     networks:
       - finlab-net
-    user: "${UID}:${GID}"
+    # user: "${UID}:${GID}"
 
   backend-ma:
     build:
@@ -68,11 +68,9 @@ services:
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
       - LANGFUSE_HOST=${LANGFUSE_HOST:-}
-      - PYTHONDONTWRITEBYTECODE=1
-      - PYTHONPYCACHEPREFIX=/tmp
     networks:
       - finlab-net
-    user: "${UID}:${GID}"
+    # user: "${UID}:${GID}"
 
 volumes:
   openwebui-data-ma:
