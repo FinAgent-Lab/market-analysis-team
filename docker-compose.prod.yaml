@@ -75,8 +75,8 @@ services:
     user: "${UID}:${GID}"
 
 volumes:
-  # openwebui-data-ma:
-  pipelines-data:
+  openwebui-data-ma:
+  # pipelines-data:
 
 networks:
   finlab-net:
