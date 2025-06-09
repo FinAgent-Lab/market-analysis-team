@@ -72,7 +72,7 @@ services:
       - PYTHONPYCACHEPREFIX=/tmp
     networks:
       - finlab-net
-    user: "${UID}:${GID}"
+    # user: "${UID}:${GID}"
 
 volumes:
   openwebui-data-ma:
