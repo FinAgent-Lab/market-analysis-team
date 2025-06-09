@@ -19,7 +19,7 @@ services:
       - pipelines-ma
     networks:
       - finlab-net
-    # user: "${UID}:${GID}"
+    user: "${UID}:${GID}"
 
   # Pipelines - OpenWebUI 플러그인 프레임워크
   pipelines-ma:
@@ -29,8 +29,8 @@ services:
     expose:
       - "9099"
     volumes:
-      # - pipelines-data:/app/pipelines
-      - ./pipelines:/app/pipelines
+      - pipelines-data:/app/pipelines
+      # - ./pipelines:/app/pipelines
     environment:
       - APISERVER_HOST=backend-ma:8000
       - PIPELINES_DIR=/app/pipelines
@@ -40,7 +40,7 @@ services:
       # - PYTHONPYCACHEPREFIX=/tmp
     networks:
       - finlab-net
-    # user: "${UID}:${GID}"
+    user: "${UID}:${GID}"
 
   backend-ma:
     build:
@@ -70,11 +70,11 @@ services:
       - LANGFUSE_HOST=${LANGFUSE_HOST:-}
     networks:
       - finlab-net
-    # user: "${UID}:${GID}"
+    user: "${UID}:${GID}"
 
 volumes:
   openwebui-data-ma:
-  # pipelines-data:
+  pipelines-data:
 
 networks:
   finlab-net:
