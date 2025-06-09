@@ -68,6 +68,8 @@ jobs:
           LANGFUSE_SECRET_KEY=${{ secrets.LANGFUSE_SECRET_KEY }}
           LANGFUSE_PUBLIC_KEY=${{ secrets.LANGFUSE_PUBLIC_KEY }}
           LANGFUSE_HOST=${{ vars.LANGFUSE_HOST }}
+          UID=$CURRENT_UID
+          GID=$CURRENT_GID
           EOF
     #   - name: Login to GitHub Container Registry
     #     uses: docker/login-action@v2
