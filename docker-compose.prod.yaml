@@ -29,15 +29,15 @@ services:
     expose:
       - "9099"
     volumes:
-      - pipelines-data:/app/pipelines
-      # - ./pipelines:/app/pipelines
+      # - pipelines-data:/app/pipelines
+      - ./pipelines:/app/pipelines
     environment:
       - APISERVER_HOST=backend-ma:8000
       - PIPELINES_DIR=/app/pipelines
       # 필요한 경우 특정 파이프라인 URL 추가 (주석 해제 후 사용)
       # - PIPELINES_URLS=https://github.com/open-webui/pipelines/blob/main/examples/filters/detoxify_filter_pipeline.py
-      # - PYTHONDONTWRITEBYTECODE=1
-      # - PYTHONPYCACHEPREFIX=/tmp
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONPYCACHEPREFIX=/tmp
     networks:
       - finlab-net
     user: "${UID}:${GID}"
@@ -68,12 +68,14 @@ services:
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
       - LANGFUSE_HOST=${LANGFUSE_HOST:-}
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONPYCACHEPREFIX=/tmp
     networks:
       - finlab-net
     user: "${UID}:${GID}"
 
 volumes:
-  openwebui-data-ma:
+  # openwebui-data-ma:
   pipelines-data:
 
 networks:
