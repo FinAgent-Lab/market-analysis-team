@@ -19,7 +19,7 @@ services:
       - pipelines-ma
     networks:
       - finlab-net
-    user: "${UID}:${GID}"
+    # user: "${UID}:${GID}"
 
   # Pipelines - OpenWebUI 플러그인 프레임워크
   pipelines-ma:
@@ -40,7 +40,7 @@ services:
       - PYTHONPYCACHEPREFIX=/tmp
     networks:
       - finlab-net
-    user: "${UID}:${GID}"
+    # user: "${UID}:${GID}"
 
   backend-ma:
     build:
