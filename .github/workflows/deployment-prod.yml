@@ -22,7 +22,7 @@ jobs:
     steps:
       - name: update permission
         run: |
-          sudo chmod -R 777 .
+          sudo chmod -R 777 /opt/actions-runner/_work
 
       - name: Checkout code
         uses: actions/checkout@v4
