@@ -2,7 +2,7 @@ name: Deploy to Self-Hosted Runner
 
 on:
   push:
-    branches: [ dev, develop, fix/* ]
+    branches: [ dev, develop ]
 #   workflow_dispatch:
 #     inputs:
 #       environment:
@@ -75,12 +75,6 @@ jobs:
           # UID=$CURRENT_UID
           # GID=$CURRENT_GID
           EOF
-    #   - name: Login to GitHub Container Registry
-    #     uses: docker/login-action@v2
-    #     with:
-    #       registry: ghcr.io
-    #       username: ${{ github.actor }}
-    #       password: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Build and tag Docker images
         run: |
