@@ -2,6 +2,8 @@ from dotenv import load_dotenv
 
 from dependency_injector.wiring import Provide, inject
 import uvicorn
+# from apscheduler.schedulers.background import BackgroundScheduler
+
 from api.server import APIBuilder
 from src.graph.nodes.us_financial_fmg import StockInfoNode
 from src.graph.nodes import (
@@ -9,16 +11,20 @@ from src.graph.nodes import (
     ReportAssistantNode,
     ChosunRSSFeederNode,
     RetrieveESGNode,
+    # WeeklyReporterNode,
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
     USFinancialAnalyzerNode,
     GoogleSearcherNode,
+    CompanyFactsAnalyzerNode,
 )
 from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
+
+# from src.tasks.weekly_recap_scraper import scrape_jp_weekly_recap
 from startup import Container
 from rich.console import Console
-import os
+# import os
 
 
 console = Console()
@@ -58,7 +64,7 @@ logo = """
 def main(
     graph_builder: SupervisorGraphBuilder = Provide[Container.supervisor_graph],
 ):
-    # console.print(logo)
+    console.print(logo)
     logger.info("Starting Market Analysis Agent service...")
 
     ## 그래프 빌더
@@ -76,17 +82,21 @@ def main(
     graph_builder.add_node(GoogleSearcherNode())
     graph_builder.add_node(RetrieveESGNode())
     graph_builder.add_node(ReportAssistantNode())
+    # graph_builder.add_node(WeeklyReporterNode())
     graph_builder.add_node(ChosunRSSFeederNode())
     graph_builder.add_node(WSJEconomyRSSFeederNode())
     graph_builder.add_node(WSJMarketRSSFeederNode())
-    # graph_builder.add_node(StockInfoNode())   # TODO: 종합 처리 기능 적용 시 주석 해제
+    graph_builder.add_node(StockInfoNode())  # TODO: 종합 처리 기능 적용 시 주석 해제
+    graph_builder.add_node(CompanyFactsAnalyzerNode())
+
 
     # 한투 API 분석 에이전트 노드 주석 처리 (미국 주식 노드로 대체)
     # graph_builder.add_node(HantooFinancialAnalyzerNode())
 
     # 미국 주식 분석 에이전트 노드 추가 (Alpha Vantage API 사용)
-    # graph_builder.add_node(USFinancialAnalyzerNode())
+    graph_builder.add_node(USFinancialAnalyzerNode())
 
+    # # 주간 리포트 스크래핑 스케쥴러
     # if os.getenv("PRODUCTION", "false").lower() == "true":
     #     # 주간 리캡 스크래핑 노드 추가
     #     vector_store = Container.vector_store_recap()
@@ -120,6 +130,11 @@ def main(
 
 if __name__ == "__main__":
     container = Container()
-    container.wire(modules=[__name__, "api.route"])
-    # container.wire(modules=[__name__, "api.route", "src.tasks.weekly_recap_scraper"])
+    container.wire(
+        modules=[
+            __name__,
+            "api.route",
+            # "src.tasks.weekly_recap_scraper"
+        ]
+    )
     main()

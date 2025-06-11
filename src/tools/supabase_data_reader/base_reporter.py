@@ -1,9 +1,7 @@
 """
 공통 주간 보고서 생성 기능
 """
-import json
-from datetime import datetime
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, List
 from abc import ABC, abstractmethod
 from langchain_core.language_models.base import BaseLanguageModel
 

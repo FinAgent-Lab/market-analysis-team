@@ -12,6 +12,7 @@ from src.graph.nodes.hantoo_financial import HantooFinancialAnalyzerNode
 from src.graph.nodes.us_financial import USFinancialAnalyzerNode
 from src.graph.nodes.weekly_reporter import WeeklyReporterNode
 from src.graph.nodes.retrieve_esg import RetrieveESGNode
+from src.graph.nodes.company_facts_analyzer import CompanyFactsAnalyzerNode
 
 __all__ = [
     "Node",
@@ -30,6 +31,8 @@ __all__ = [
     # Financial Analyzers
     "HantooFinancialAnalyzerNode",
     "USFinancialAnalyzerNode",
+    # Company Facts Analyzer
+    "CompanyFactsAnalyzerNode",
     # Weekly Reporter
     "WeeklyReporterNode",
 ]

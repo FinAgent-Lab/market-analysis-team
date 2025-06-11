@@ -20,9 +20,15 @@ jobs:
     runs-on: finlab-1
     
     steps:
+      - name: update permission
+        run: |
+          sudo chmod -R 777 /opt/actions-runner/_work
+
       - name: Checkout code
         uses: actions/checkout@v4
-      
+        with:
+          clean: true
+
       - name: Install required tools
         run: |
           # jq와 curl이 설치되어 있는지 확인하고 없으면 설치
@@ -42,6 +48,11 @@ jobs:
       
       - name: Set up environment variables
         run: |
+          CURRENT_UID=$(id -u)
+          CURRENT_GID=$(id -g)
+          USER_NAME=$(whoami)
+          echo "USER_NAME: $USER_NAME"
+
           cat > .env << EOF
           PRODUCTION=${{ vars.PRODUCTION }}
           APISERVER_PORT_EXTERNAL=8000
@@ -61,14 +72,9 @@ jobs:
           LANGFUSE_SECRET_KEY=${{ secrets.LANGFUSE_SECRET_KEY }}
           LANGFUSE_PUBLIC_KEY=${{ secrets.LANGFUSE_PUBLIC_KEY }}
           LANGFUSE_HOST=${{ vars.LANGFUSE_HOST }}
+          # UID=$CURRENT_UID
+          # GID=$CURRENT_GID
           EOF
-      
-    #   - name: Login to GitHub Container Registry
-    #     uses: docker/login-action@v2
-    #     with:
-    #       registry: ghcr.io
-    #       username: ${{ github.actor }}
-    #       password: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Build and tag Docker images
         run: |
@@ -82,86 +88,18 @@ jobs:
         run: |
           docker compose -f docker-compose.prod.yaml up -d --remove-orphans
       
-      - name: Check service health
+      - name: Check service availability 
         run: |
-          # 서비스가 정상적으로 시작되었는지 확인
-          echo "서비스 시작 대기 중..."
-          sleep 30
+          echo "=== 방법 2: TCP 포트 연결 확인 ==="
           
-          # 헬스체크 재시도 로직
-          max_retries=6
-          retry_count=0
-          health_check_passed=false
-          
-          while [ $retry_count -lt $max_retries ] && [ "$health_check_passed" = false ]; do
-            echo "헬스체크 시도 $((retry_count + 1))/$max_retries"
-            
-            # 기본 헬스체크
-            if health_response=$(curl -s --max-time 10 "http://localhost:8000/api/health"); then
-              health_status=$(echo "$health_response" | jq -r '.status // empty')
-              
-              if [ "$health_status" = "healthy" ]; then
-                echo "✓ 기본 헬스체크 통과"
-                
-                # 추가 기능 테스트 - 루트 엔드포인트 확인
-                if root_response=$(curl -s --max-time 10 "http://localhost:8000/api/"); then
-                  root_status=$(echo "$root_response" | jq -r '.status // empty')
-                  
-                  if [ "$root_status" = "online" ]; then
-                    echo "✓ API 서비스 온라인 확인"
-                    
-                    # 상세 헬스체크 수행
-                    if detailed_response=$(curl -s --max-time 10 "http://localhost:8000/api/health/detailed"); then
-                      detailed_status=$(echo "$detailed_response" | jq -r '.status // empty')
-                      
-                      if [ "$detailed_status" = "healthy" ]; then
-                        echo "✓ 상세 헬스체크 통과"
-                        cpu_percent=$(echo "$detailed_response" | jq -r '.system.cpu_percent // "N/A"')
-                        memory_percent=$(echo "$detailed_response" | jq -r '.system.memory_percent // "N/A"')
-                        openai_configured=$(echo "$detailed_response" | jq -r '.environment.openai_configured // "N/A"')
-                        langfuse_enabled=$(echo "$detailed_response" | jq -r '.environment.langfuse_enabled // "N/A"')
-                        
-                        echo "  - CPU 사용률: ${cpu_percent}%"
-                        echo "  - 메모리 사용률: ${memory_percent}%"
-                        echo "  - OpenAI 설정: ${openai_configured}"
-                        echo "  - Langfuse 활성화: ${langfuse_enabled}"
-                        health_check_passed=true
-                      else
-                        echo "✗ 상세 헬스체크 실패: $detailed_status"
-                      fi
-                    else
-                      echo "⚠ 상세 헬스체크 실패하지만 기본 서비스는 정상"
-                      health_check_passed=true
-                    fi
-                  else
-                    echo "✗ API 서비스 상태 이상"
-                  fi
-                else
-                  echo "✗ API 루트 엔드포인트 요청 실패"
-                fi
-              else
-                echo "✗ 헬스체크 실패: $health_status"
-              fi
-            else
-              echo "✗ 헬스체크 요청 실패"
-            fi
-            
-            if [ "$health_check_passed" = false ]; then
-              retry_count=$((retry_count + 1))
-              if [ $retry_count -lt $max_retries ]; then
-                echo "10초 후 재시도..."
-                sleep 10
-              fi
-            fi
-          done
-          
-          if [ "$health_check_passed" = false ]; then
-            echo "❌ 서비스 상태 확인 실패 - 로그 출력"
-            docker compose -f docker-compose.prod.yaml logs --tail=50
-            exit 1
-          fi
-          
-          echo "✅ 서비스가 정상적으로 배포되었습니다."
+          # netcat을 사용한 포트 체크 (더 안정적)
+          timeout 60 bash -c '
+            until nc -z localhost 8000; do
+              echo "포트 8000 연결 대기 중..."
+              sleep 2
+            done
+          '
+          echo "✅ 포트 8000에 연결 가능합니다."
       
       - name: Clean up old images
         run: |

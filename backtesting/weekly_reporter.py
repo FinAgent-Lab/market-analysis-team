@@ -1,54 +1,119 @@
 """
-백테스팅 전용 주간 보고서 생성 모듈
+백테스팅 전용 주간 보고서 생성 모듈 (월요일-일요일 기준)
 """
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
-import json # 추가
+import json
+from typing import Any, List, Optional
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from src.tools.supabase_data_reader.base_reporter import BaseWeeklyReporter
 
 # 프로젝트 루트 경로 추가
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from src.tools.supabase_data_reader.base_reporter import BaseWeeklyReporter
-
 load_dotenv()
 
-def create_openrouter_llm(model_name: str = "openai/gpt-4o-mini") -> ChatOpenAI:
-    """OpenRouter API를 사용하는 LLM 인스턴스 생성"""
+class SolarChatOpenAI(ChatOpenAI):
+    """Solar API 전용 ChatOpenAI 클래스 - Solar API에서 지원하지 않는 파라미터 제거"""
+    
+    def _get_request_payload(
+        self,
+        input_: Any,
+        *,
+        stop: Optional[List[str]] = None,
+        **kwargs: Any,
+    ) -> dict:
+        """요청 페이로드에서 Solar API에서 지원하지 않는 파라미터 제거"""
+        payload = super()._get_request_payload(input_, stop=stop, **kwargs)
+        
+        # Solar API에서 지원하지 않는 파라미터들 제거
+        solar_unsupported_params = [
+            "max_completion_tokens",
+            "max_tokens_to_sample", 
+            "top_k",
+            "repetition_penalty",
+            "length_penalty",
+            "presence_penalty",
+            "frequency_penalty"
+        ]
+        
+        for param in solar_unsupported_params:
+            payload.pop(param, None)
+        
+        return payload
+
+def create_llm(model_name: str = "openai/gpt-4o-mini") -> ChatOpenAI:
+    """LLM 인스턴스 생성 (Solar Pro2, OpenRouter, OpenAI 지원)"""
     
     # OpenRouter 모델 목록
     openrouter_models = [
-        "anthropic/claude-3.5-sonnet",
-        "anthropic/claude-3-haiku",
-        "openai/gpt-4o", 
         "openai/gpt-4o-mini",
-        "meta-llama/llama-3.1-8b-instruct",
-        "google/gemini-pro-1.5"
     ]
     
-    # OpenRouter API 키 확인
-    openrouter_api_key = os.environ.get("OPENROUTER_API_KEY")
-    openrouter_base_url = os.environ.get("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+    # Solar Pro2 모델 사용
+    if model_name == "solar-pro2-preview":
+        solar_api_key = os.environ.get("SOLAR_API_KEY")
+        solar_base_url = "https://api.upstage.ai/v1"
+        
+        if solar_api_key:
+            print(f"☀️ Solar Pro2 사용: {model_name}")
+            print("🧠 Solar Pro2 Reasoning 모드 활성화 (high effort)")
+            print("⏱️ API Rate Limit 방지를 위해 요청 간격 조정")
+            
+            # 커스텀 Solar 클래스 사용
+            return SolarChatOpenAI(
+                model=model_name,
+                openai_api_key=solar_api_key,
+                openai_api_base=solar_base_url,
+                request_timeout=60,
+                max_retries=3,
+                model_kwargs={
+                    "reasoning_effort": "high",
+                    "temperature": 0.1,
+                    "max_tokens": 4000,
+                },
+                extra_headers={
+                    "User-Agent": "Market Analysis Backtesting"
+                }
+            )
+        else:
+            print("❌ SOLAR_API_KEY가 설정되지 않았습니다. OpenAI로 폴백합니다.")
+            return ChatOpenAI(
+                model="gpt-4o-mini",
+                temperature=0.1
+            )
     
-    if model_name in openrouter_models and openrouter_api_key:
-        print(f"🔄 OpenRouter 사용: {model_name}")
-        return ChatOpenAI(
-            model=model_name,
-            openai_api_key=openrouter_api_key,
-            openai_api_base=openrouter_base_url,
-            temperature=0.1,
-            max_tokens=4000,
-            extra_headers={
-                "HTTP-Referer": "https://github.com/your-repo",  # 옵션: 리퍼러 설정
-                "X-Title": "Market Analysis Backtesting"  # 옵션: 앱 이름
-            }
-        )
+    # OpenRouter 모델 사용
+    elif model_name in openrouter_models:
+        openrouter_api_key = os.environ.get("OPENROUTER_API_KEY")
+        openrouter_base_url = os.environ.get("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+        
+        if openrouter_api_key:
+            print(f"🔄 OpenRouter 사용: {model_name}")
+            return ChatOpenAI(
+                model=model_name,
+                openai_api_key=openrouter_api_key,
+                openai_api_base=openrouter_base_url,
+                temperature=0.1,
+                max_tokens=4000,
+                extra_headers={
+                    "HTTP-Referer": "https://github.com/your-repo",
+                    "X-Title": "Market Analysis Backtesting"
+                }
+            )
+        else:
+            print("❌ OPENROUTER_API_KEY가 설정되지 않았습니다. OpenAI로 폴백합니다.")
+            return ChatOpenAI(
+                model="gpt-4o-mini",
+                temperature=0.1
+            )
+    
+    # OpenAI 모델 사용 (기본값 및 폴백)
     else:
-        # OpenAI API 폴백
         print(f"🤖 OpenAI 사용: {model_name}")
         return ChatOpenAI(
             model=model_name if model_name.startswith("gpt-") else "gpt-4o-mini",
@@ -56,29 +121,257 @@ def create_openrouter_llm(model_name: str = "openai/gpt-4o-mini") -> ChatOpenAI:
         )
 
 class BacktestingWeeklyReporter(BaseWeeklyReporter):
-    """백테스팅 전용 주간 보고서 생성 클래스"""
+    """백테스팅 전용 주간 보고서 생성 클래스 (월요일-일요일 기준)"""
     
-    def __init__(self, model_name: str = "openai/gpt-4o-mini"):
-        llm = create_openrouter_llm(model_name)
+    def __init__(self, model_name: str = "solar-pro2-preview"):
+        llm = create_llm(model_name)
         super().__init__(llm)
         self.model_name = model_name
         self.supported_tickers = ["AAPL", "NVDA", "MSFT", "TSLA", "GOOGL"]
+        self.report_type = "backtesting_weekly"
     
-    def generate_weekly_report(self, ticker: str, end_date: str) -> str:
-        """백테스팅용 주간 보고서 생성 (오버라이드)"""
+    def get_week_range(self, target_date: str) -> tuple[str, str]:
+        """
+        주어진 날짜가 속한 주의 월요일-일요일 범위 반환
+        
+        Args:
+            target_date: 주간 보고서 기준일 (보통 일요일)
+            
+        Returns:
+            tuple: (monday_date, sunday_date)
+        """
+        target = datetime.strptime(target_date, "%Y-%m-%d")
+        
+        # 해당 주의 월요일 찾기
+        days_since_monday = target.weekday()  # 월요일: 0, 화요일: 1, ..., 일요일: 6
+        monday = target - timedelta(days=days_since_monday)
+        
+        # 해당 주의 일요일 찾기
+        sunday = monday + timedelta(days=6)
+        
+        return monday.strftime("%Y-%m-%d"), sunday.strftime("%Y-%m-%d")
+    
+    def safe_get_date_from_item(self, item: dict, date_keys: List[str]) -> Optional[datetime]:
+        """데이터 항목에서 안전하게 날짜를 추출"""
+        for key in date_keys:
+            if key in item and item[key]:
+                try:
+                    date_str = str(item[key])
+                    # 다양한 날짜 형식 처리
+                    if 'T' in date_str:
+                        # ISO 형식: 2023-01-16T10:30:00
+                        return datetime.strptime(date_str[:10], "%Y-%m-%d")
+                    else:
+                        # 날짜만: 2023-01-16
+                        return datetime.strptime(date_str[:10], "%Y-%m-%d")
+                except (ValueError, AttributeError) as e:
+                    print(f"날짜 파싱 오류 ({key}: {item.get(key)}): {e}")
+                    continue
+        return None
+    
+    def collect_weekly_data(self, ticker: str, start_date: str, end_date: str) -> dict:
+        """
+        월요일-일요일 범위의 주간 데이터 수집
+        
+        Args:
+            ticker: 종목 코드
+            start_date: 주 시작일 (월요일)
+            end_date: 주 종료일 (일요일)
+            
+        Returns:
+            dict: 수집된 주간 데이터
+        """
+        try:
+            # 기본 데이터 수집 (base_reporter의 data_reader 사용)
+            weekly_data = self.data_reader.get_weekly_data_summary(ticker, end_date)
+            
+            # 월요일-일요일 특화 정보 추가
+            if weekly_data:
+                # 실제 분석 기간을 월요일-일요일로 수정
+                weekly_data['period'] = f"{start_date} ~ {end_date}"
+                weekly_data['week_info'] = {
+                    'week_start': start_date,
+                    'week_end': end_date,
+                    'week_type': 'monday_to_sunday',
+                    'is_complete_week': True
+                }
+                
+                start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+                end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+                
+                # 주가 데이터 필터링 (월요일-일요일 범위만)
+                if 'prices' in weekly_data and weekly_data['prices']:
+                    filtered_prices = []
+                    
+                    for price in weekly_data['prices']:
+                        price_date = self.safe_get_date_from_item(price, ['time', 'date', 'timestamp'])
+                        if price_date and start_dt <= price_date <= end_dt:
+                            filtered_prices.append(price)
+                    
+                    weekly_data['prices'] = filtered_prices
+                    print(f"📊 주가 데이터 필터링: {len(weekly_data.get('prices', []))} → {len(filtered_prices)}개")
+                
+                # 뉴스 데이터 필터링 (월요일-일요일 범위만)
+                if 'news' in weekly_data and weekly_data['news']:
+                    filtered_news = []
+                    
+                    for news in weekly_data['news']:
+                        news_date = self.safe_get_date_from_item(news, ['time', 'date', 'published_at', 'timestamp'])
+                        if news_date and start_dt <= news_date <= end_dt:
+                            filtered_news.append(news)
+                    
+                    weekly_data['news'] = filtered_news
+                    print(f"📰 뉴스 데이터 필터링: {len(weekly_data.get('news', []))} → {len(filtered_news)}개")
+                
+                # 내부자 거래 데이터 필터링 (월요일-일요일 범위만)
+                if 'insider_trades' in weekly_data and weekly_data['insider_trades']:
+                    filtered_insider = []
+                    
+                    for trade in weekly_data['insider_trades']:
+                        trade_date = self.safe_get_date_from_item(trade, ['filing_date', 'transaction_date', 'date'])
+                        if trade_date and start_dt <= trade_date <= end_dt:
+                            filtered_insider.append(trade)
+                    
+                    weekly_data['insider_trades'] = filtered_insider
+                    print(f"🔄 내부자 거래 필터링: {len(weekly_data.get('insider_trades', []))} → {len(filtered_insider)}개")
+            
+            return weekly_data
+            
+        except Exception as e:
+            print(f"주간 데이터 수집 오류: {e}")
+            import traceback
+            print(f"상세 오류: {traceback.format_exc()}")
+            return {}
+    
+    def generate_weekly_report(self, ticker: str, target_date: str) -> str:
+        """
+        백테스팅용 주간 보고서 생성 (월요일-일요일 기준, 오버라이드)
+        
+        Args:
+            ticker: 종목 코드
+            target_date: 보고서 기준일 (해당 주의 일요일)
+            
+        Returns:
+            str: 생성된 보고서 텍스트
+        """
         if ticker not in self.supported_tickers:
             return f"❌ 지원되지 않는 종목입니다. 지원 종목: {', '.join(self.supported_tickers)}"
         
-        # 부모 클래스 메서드 호출
-        return super().generate_weekly_report(ticker, end_date)
+        try:
+            # 주간 범위 계산 (월요일-일요일)
+            monday, sunday = self.get_week_range(target_date)
+            
+            print(f"📅 주간 범위: {monday} (월) ~ {sunday} (일), 보고서일: {target_date}")
+            
+            # 주간 데이터 수집
+            weekly_data = self.collect_weekly_data(ticker, monday, sunday)
+            
+            if not weekly_data:
+                return f"❌ {ticker} - {target_date}: 주간 데이터 수집 실패"
+            
+            # 분석 데이터 생성
+            price_analysis = self._analyze_prices(weekly_data.get("prices", []))
+            news_analysis = self._analyze_news(weekly_data.get("news", []))
+            insider_analysis = self._analyze_insider_trades(weekly_data.get("insider_trades", []))
+            
+            print(f"📈 분석 완료: 주가({len(weekly_data.get('prices', []))}개), 뉴스({len(weekly_data.get('news', []))}개), 내부자({len(weekly_data.get('insider_trades', []))}개)")
+            
+            # 보고서 생성
+            report_params = {
+                "ticker": ticker,
+                "period": f"{monday} ~ {sunday}",  # 명시적으로 월요일-일요일 기간 설정
+                "report_date_original": target_date,
+                "price_analysis": price_analysis,
+                "news_analysis": news_analysis,
+                "insider_analysis": insider_analysis,
+                "company_facts": weekly_data.get("company_facts", {}),
+                "financial_metrics_data": weekly_data.get("financial_metrics", {}),
+                "financial_metrics_report_date": weekly_data.get("report_date_for_financials", "N/A")
+            }
+            
+            report = self._generate_report(**report_params)
+            
+            if not report or len(report.strip()) < 100:
+                return f"❌ {ticker} - {target_date}: 보고서 생성 실패 (내용 부족)"
+            
+            # Supabase에 저장
+            save_success = self.save_report_to_supabase(
+                ticker=ticker,
+                report_date=target_date,
+                report_content=report,
+                report_type=self.report_type,
+                metadata={
+                    "week_start": monday,
+                    "week_end": sunday,
+                    "week_type": "monday_to_sunday",
+                    "analysis_period": f"{monday} ~ {sunday}",
+                    "data_counts": {
+                        "prices": len(weekly_data.get("prices", [])),
+                        "news": len(weekly_data.get("news", [])),
+                        "insider_trades": len(weekly_data.get("insider_trades", []))
+                    }
+                }
+            )
+            
+            if save_success:
+                print(f"✅ {ticker} - {target_date}: 보고서 생성 및 저장 완료")
+                return report
+            else:
+                print(f"⚠️ {ticker} - {target_date}: 보고서 생성됨, 저장 실패")
+                return report
+            
+        except Exception as e:
+            error_msg = f"❌ {ticker} - {target_date}: 보고서 생성 중 오류 - {e}"
+            print(error_msg)
+            import traceback
+            print(f"상세 오류: {traceback.format_exc()}")
+            return error_msg
+    
+    def save_report_to_supabase(self, ticker: str, report_date: str, report_content: str, 
+                               report_type: str, metadata: dict = None) -> bool:
+        """Supabase에 보고서 저장"""
+        try:
+            record = {
+                "id": f"{report_type}_{ticker}_{report_date}",
+                "ticker": ticker,
+                "report_date": report_date,
+                "report_type": report_type,
+                "content": report_content,
+                "metadata": {
+                    "purpose": "backtesting",
+                    "generated_at": datetime.now().isoformat(),
+                    "data_source": "supabase_historical",
+                    "analysis_type": "weekly_pattern",
+                    "ai_model": self.model_name,
+                    **(metadata or {})
+                },
+                "created_at": datetime.now().isoformat()
+            }
+            
+            response = self.data_reader.client.table("stock_reports").upsert(record, on_conflict="id").execute()
+            return bool(response.data)
+        except Exception as e:
+            print(f"백테스팅 보고서 저장 실패: {e}")
+            return False
     
     def _generate_report(self, **kwargs) -> str:
         """백테스팅 보고서 생성"""
         
+        # 모델별 시스템 메시지 설정
         if "claude" in self.model_name.lower():
             system_message = "당신은 전문적인 금융 분석가입니다. 제공된 과거 데이터를 기반으로 지정된 형식에 맞춰 상세하고 객관적인 주간 종목 분석 보고서를 작성해주세요."
+        elif self.model_name == "solar-pro2-preview":
+            system_message = """당신은 전문적인 금융 분석가입니다. Solar Pro2의 고급 추론(Reasoning) 능력을 활용하여 제공된 과거 데이터를 체계적으로 분석해주세요.
+
+분석 접근 방법:
+1. 먼저 제공된 모든 데이터를 종합적으로 검토하고 주요 패턴을 식별하세요
+2. 주가 움직임, 뉴스 감성, 내부자 거래, 재무 지표 간의 상관관계를 분석하세요  
+3. 각 요소가 주식 성과에 미친 영향을 논리적으로 추론하세요
+4. 백테스팅 관점에서 해당 주간의 투자 시사점을 도출하세요
+
+지정된 형식에 맞춰 상세하고 객관적인 주간 종목 분석 보고서를 한국어로 작성해주세요."""
         elif "gpt" in self.model_name.lower():
-            system_message = "You are a professional financial analyst. Based on the provided historical data, write a detailed and objective weekly stock analysis report in the specified format."
+            system_message = "You are a professional financial analyst. Based on the provided historical data, write a detailed and objective weekly stock analysis report in the specified format in Korean."
         else:
             system_message = "당신은 금융 분석 전문가입니다. 과거 데이터를 바탕으로 보고서를 작성합니다."
         
@@ -130,6 +423,8 @@ class BacktestingWeeklyReporter(BaseWeeklyReporter):
         # 플레이스홀더를 사용한 템플릿 문자열
         prompt_human_template = """
 다음 과거 데이터를 바탕으로 {ticker}의 주간 종목 분석 보고서를 작성해주세요. 보고서의 기준일은 {report_date_original}입니다.
+
+**중요: 분석 기간은 반드시 {price_news_insider_period}으로 표시해주세요. 이는 월요일-일요일 기준의 완전한 주간 범위입니다.**
 
 **제공 데이터 요약:**
 *   **기업 정보 (Company Facts)**: 회사명 '{company_name}', 산업 '{company_industry}', 섹터 '{company_sector}', 거래소 '{company_exchange}' 등. (세부사항은 아래 전체 데이터 참조)
@@ -271,52 +566,38 @@ class BacktestingWeeklyReporter(BaseWeeklyReporter):
             error_msg += f"- Financial Metrics: {type(kwargs.get('financial_metrics_data'))} (기준일: {kwargs.get('financial_metrics_report_date')})\n"
             error_msg += f"- News Analysis: {type(kwargs.get('news_analysis'))}\n"
             error_msg += f"- Insider Analysis: {type(kwargs.get('insider_analysis'))}\n"
-            # 실제 데이터 일부를 로깅하고 싶다면 아래처럼 추가 (너무 길어질 수 있으니 주의)
-            # error_msg += f"Financial Metrics Data (sample): {str(kwargs.get('financial_metrics_data', {}))[:200]}\n"
             return error_msg
     
     def _save_report(self, ticker: str, report_date: str, content: str) -> bool:
-        """백테스팅 보고서 저장"""
-        try:
-            record = {
-                "id": f"backtesting_weekly_{ticker}_{report_date}",
-                "ticker": ticker,
-                "report_date": report_date,
-                "report_type": "backtesting_weekly",
-                "content": content,
-                "metadata": {
-                    "purpose": "backtesting",
-                    "generated_at": datetime.now().isoformat(),
-                    "data_source": "supabase_historical",
-                    "analysis_type": "weekly_pattern",
-                    "ai_model": self.model_name
-                },
-                "created_at": datetime.now().isoformat()
-            }
-            
-            response = self.data_reader.client.table("stock_reports").upsert(record, on_conflict="id").execute()
-            return bool(response.data)
-        except Exception as e:
-            print(f"백테스팅 보고서 저장 실패: {e}")
-            return False
+        """백테스팅 보고서 저장 (base_reporter 호환성을 위한 메서드)"""
+        return self.save_report_to_supabase(
+            ticker=ticker,
+            report_date=report_date,
+            report_content=content,
+            report_type=self.report_type
+        )
 
 def main():
     """백테스팅 주간 보고서 생성 실행"""
     import argparse
     
-    parser = argparse.ArgumentParser(description="백테스팅 주간 보고서 생성")
+    parser = argparse.ArgumentParser(description="백테스팅 주간 보고서 생성 (월요일-일요일 기준)")
     parser.add_argument("--ticker", required=True, help="종목 심볼 (AAPL, NVDA, MSFT, TSLA, GOOGL)")
-    parser.add_argument("--date", required=True, help="분석 종료일 (YYYY-MM-DD)")
-    parser.add_argument("--model", default="openai/gpt-4o-mini", help="사용할 LLM 모델")  # 기본 모델 변경
+    parser.add_argument("--date", required=True, help="보고서 기준일 (YYYY-MM-DD, 보통 일요일)")
+    parser.add_argument("--model", default="solar-pro2-preview", help="사용할 LLM 모델 (solar-pro2-preview, openai/gpt-4o-mini 등)")
     
     args = parser.parse_args()
     
     reporter = BacktestingWeeklyReporter(model_name=args.model)
     
-    print(f"🔬 백테스팅 주간 보고서 생성 시작...")
+    print("🔬 백테스팅 주간 보고서 생성 시작...")
     print(f"📊 종목: {args.ticker}")
     print(f"📅 기준일: {args.date}")
     print(f"🤖 모델: {args.model}")
+    
+    # 주간 범위 확인
+    monday, sunday = reporter.get_week_range(args.date)
+    print(f"📅 주간 범위: {monday} (월) ~ {sunday} (일)")
     print("-" * 50)
     
     report = reporter.generate_weekly_report(args.ticker, args.date)

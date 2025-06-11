@@ -24,7 +24,7 @@ def run_command(command: str, description: str):
     start_time = datetime.now()
     
     try:
-        result = subprocess.run(
+        subprocess.run(
             command,
             shell=True,
             cwd=os.path.dirname(__file__),
@@ -86,10 +86,10 @@ def main():
     print(f"🕐 완료 시간: {pipeline_end.strftime('%Y-%m-%d %H:%M:%S')}")
     
     # 다음 단계 안내
-    print(f"\n📋 다음 단계:")
-    print(f"1. 생성된 보고서 확인: python cli.py list --limit 20")
-    print(f"2. 특정 보고서 조회: python cli.py report --ticker AAPL --date 2024-03-15")
-    print(f"3. 데이터베이스 직접 확인 (Supabase Dashboard)")
+    print("\n📋 다음 단계:")
+    print("1. 생성된 보고서 확인: python cli.py list --limit 20")
+    print("2. 특정 보고서 조회: python cli.py report --ticker AAPL --date 2024-03-15")
+    print("3. 데이터베이스 직접 확인 (Supabase Dashboard)")
 
 if __name__ == "__main__":
     main()
