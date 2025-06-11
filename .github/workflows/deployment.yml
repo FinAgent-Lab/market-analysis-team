@@ -1,91 +1,91 @@
-name: Deploy to Self-Hosted Runner
+# name: Deploy to Self-Hosted Runner
 
-on:
-  push:
-    branches: [ dev, develop ]
-#   workflow_dispatch:
-#     inputs:
-#       environment:
-#         description: '배포 환경 선택'
-#         required: true
-#         default: 'production'
-#         type: choice
-#         options:
-#           - production
-#           - staging
+# on:
+#   push:
+#     branches: [ dev, develop ]
+# #   workflow_dispatch:
+# #     inputs:
+# #       environment:
+# #         description: '배포 환경 선택'
+# #         required: true
+# #         default: 'production'
+# #         type: choice
+# #         options:
+# #           - production
+# #           - staging
 
-jobs:
-  deploy:
-    name: Deploy to Self-Hosted Runner
-    runs-on: Windows
+# jobs:
+#   deploy:
+#     name: Deploy to Self-Hosted Runner
+#     runs-on: Windows
     
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
       
-      - name: Set up environment variables
-        shell: pwsh
-        run: |
-          @"
-          PRODUCTION=${{ vars.PRODUCTION }}
-          APISERVER_PORT_EXTERNAL=13100
-          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-          OPENAI_BASE_URL=${{ vars.OPENAI_BASE_URL }}
-          MAIN_LLM_MODEL=${{ vars.MAIN_LLM_MODEL }}
-          NAVER_CLIENT_ID=${{ secrets.NAVER_CLIENT_ID }}
-          NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET }}
-          MILVUS_URL_RECAP=${{ vars.MILVUS_URL_RECAP }}
-          MILVUS_DB_NAME_RECAP=${{ vars.MILVUS_DB_NAME_RECAP }}
-          MILVUS_COLLECTION_NAME_RECAP=${{ vars.MILVUS_COLLECTION_NAME_RECAP }}
-          ALPHA_VANTAGE_API_KEY=${{ secrets.ALPHA_VANTAGE_API_KEY }}
-          GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
-          GOOGLE_CSE_ID=${{ vars.GOOGLE_CSE_ID }}
-          FINANCIAL_API_KEY=${{ secrets.FINANCIAL_API_KEY }}
+#       - name: Set up environment variables
+#         shell: pwsh
+#         run: |
+#           @"
+#           PRODUCTION=${{ vars.PRODUCTION }}
+#           APISERVER_PORT_EXTERNAL=13100
+#           OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+#           OPENAI_BASE_URL=${{ vars.OPENAI_BASE_URL }}
+#           MAIN_LLM_MODEL=${{ vars.MAIN_LLM_MODEL }}
+#           NAVER_CLIENT_ID=${{ secrets.NAVER_CLIENT_ID }}
+#           NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET }}
+#           MILVUS_URL_RECAP=${{ vars.MILVUS_URL_RECAP }}
+#           MILVUS_DB_NAME_RECAP=${{ vars.MILVUS_DB_NAME_RECAP }}
+#           MILVUS_COLLECTION_NAME_RECAP=${{ vars.MILVUS_COLLECTION_NAME_RECAP }}
+#           ALPHA_VANTAGE_API_KEY=${{ secrets.ALPHA_VANTAGE_API_KEY }}
+#           GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
+#           GOOGLE_CSE_ID=${{ vars.GOOGLE_CSE_ID }}
+#           FINANCIAL_API_KEY=${{ secrets.FINANCIAL_API_KEY }}
 
-          "@ | Out-File -FilePath .env -Encoding utf8
+#           "@ | Out-File -FilePath .env -Encoding utf8
       
-    #   - name: Login to GitHub Container Registry
-    #     uses: docker/login-action@v2
-    #     with:
-    #       registry: ghcr.io
-    #       username: ${{ github.actor }}
-    #       password: ${{ secrets.GITHUB_TOKEN }}
+#     #   - name: Login to GitHub Container Registry
+#     #     uses: docker/login-action@v2
+#     #     with:
+#     #       registry: ghcr.io
+#     #       username: ${{ github.actor }}
+#     #       password: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Build and tag Docker images
-        shell: pwsh
-        # run: |
-        #   docker-compose build --no-cache backend-ma
-        run: |
-          docker-compose build backend-ma
+#       - name: Build and tag Docker images
+#         shell: pwsh
+#         # run: |
+#         #   docker-compose build --no-cache backend-ma
+#         run: |
+#           docker-compose build backend-ma
       
-      - name: Stop running containers
-        shell: pwsh
-        run: |
-          docker-compose down
-        continue-on-error: true
+#       - name: Stop running containers
+#         shell: pwsh
+#         run: |
+#           docker-compose down
+#         continue-on-error: true
       
-      - name: Start Docker Compose services
-        shell: pwsh
-        run: |
-          docker-compose up -d --remove-orphans
+#       - name: Start Docker Compose services
+#         shell: pwsh
+#         run: |
+#           docker-compose up -d --remove-orphans
       
-      - name: Check service health
-        shell: pwsh
-        run: |
-          # 서비스가 정상적으로 시작되었는지 확인
-          Start-Sleep -Seconds 30
-          $response = Invoke-WebRequest -Uri "http://localhost:13100/api/health" -UseBasicParsing
-          $content = $response.Content
-          if (-not ($content -match '"status":\s*"healthy"')) {
-            Write-Host "서비스 상태 확인 실패"
-            docker-compose logs
-            exit 1
-          }
-          Write-Host "서비스가 정상적으로 배포되었습니다."
+#       - name: Check service health
+#         shell: pwsh
+#         run: |
+#           # 서비스가 정상적으로 시작되었는지 확인
+#           Start-Sleep -Seconds 30
+#           $response = Invoke-WebRequest -Uri "http://localhost:13100/api/health" -UseBasicParsing
+#           $content = $response.Content
+#           if (-not ($content -match '"status":\s*"healthy"')) {
+#             Write-Host "서비스 상태 확인 실패"
+#             docker-compose logs
+#             exit 1
+#           }
+#           Write-Host "서비스가 정상적으로 배포되었습니다."
       
-      - name: Clean up old images
-        shell: pwsh
-        run: |
-          # 사용하지 않는 이미지 정리
-          docker image prune -af --filter "until=24h"
-        continue-on-error: true
+#       - name: Clean up old images
+#         shell: pwsh
+#         run: |
+#           # 사용하지 않는 이미지 정리
+#           docker image prune -af --filter "until=24h"
+#         continue-on-error: true
