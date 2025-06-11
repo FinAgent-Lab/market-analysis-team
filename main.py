@@ -79,21 +79,21 @@ def main(
     """
 
     graph_builder.add_node(NaverNewsSearcherNode())
-    # graph_builder.add_node(GoogleSearcherNode())
+    graph_builder.add_node(GoogleSearcherNode())
     graph_builder.add_node(RetrieveESGNode())
     graph_builder.add_node(ReportAssistantNode())
     # graph_builder.add_node(WeeklyReporterNode())
     graph_builder.add_node(ChosunRSSFeederNode())
     graph_builder.add_node(WSJEconomyRSSFeederNode())
     graph_builder.add_node(WSJMarketRSSFeederNode())
-    # graph_builder.add_node(StockInfoNode())  # TODO: 종합 처리 기능 적용 시 주석 해제
-    # graph_builder.add_node(CompanyFactsAnalyzerNode())
+    graph_builder.add_node(StockInfoNode())  # TODO: 종합 처리 기능 적용 시 주석 해제
+    graph_builder.add_node(CompanyFactsAnalyzerNode())
 
     # 한투 API 분석 에이전트 노드 주석 처리 (미국 주식 노드로 대체)
     # graph_builder.add_node(HantooFinancialAnalyzerNode())
 
     # 미국 주식 분석 에이전트 노드 추가 (Alpha Vantage API 사용)
-    # graph_builder.add_node(USFinancialAnalyzerNode())
+    graph_builder.add_node(USFinancialAnalyzerNode())
 
     # # 주간 리포트 스크래핑 스케쥴러
     # if os.getenv("PRODUCTION", "false").lower() == "true":
