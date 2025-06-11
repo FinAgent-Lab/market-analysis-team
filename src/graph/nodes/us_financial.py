@@ -209,6 +209,8 @@ class USFinancialAnalyzerNode(Node):
             self.logger.debug("직접 쿼리로 에이전트 실행 중")
             agent_start_time = self._get_current_time()
 
+            # config = self._get_callback_config()
+            # result = agent.invoke({"messages": [("human", query)]}, config=config)
             result = agent.invoke({"messages": [("human", query)]})
             response_content = result["messages"][-1].content
 

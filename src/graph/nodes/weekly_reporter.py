@@ -57,7 +57,8 @@ Answer:"""
         )
 
     def _invoke(self, query: str) -> RawResponse:
-        result = self._get_chain().invoke(query)
+        config = self._get_callback_config()
+        result = self._get_chain().invoke(query, config=config)
         return RawResponse(answer=result)
 
     def _get_chain(self):

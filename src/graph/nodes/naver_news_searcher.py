@@ -50,5 +50,6 @@ class NaverNewsSearcherNode(Node):
             self.tools,
             prompt=self.system_prompt,
         )
-        result = agent.invoke({"messages": [("human", query)]})
+        config = self._get_callback_config()
+        result = agent.invoke({"messages": [("human", query)]}, config=config)
         return RawResponse(answer=result["messages"][-1].content)

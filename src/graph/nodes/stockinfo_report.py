@@ -73,5 +73,7 @@ class ReportAgentNode(Node):
                 self.tools,
                 prompt=self.system_prompt
             )
+        # config = self._get_callback_config()
+        # result = self.agent.invoke({"messages": [("human", query)]}, config=config)
         result = self.agent.invoke({"messages": [("human", query)]})
         return result["messages"][-1].content
