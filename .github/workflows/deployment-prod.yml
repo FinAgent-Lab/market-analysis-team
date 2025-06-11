@@ -72,6 +72,7 @@ jobs:
           LANGFUSE_SECRET_KEY=${{ secrets.LANGFUSE_SECRET_KEY }}
           LANGFUSE_PUBLIC_KEY=${{ secrets.LANGFUSE_PUBLIC_KEY }}
           LANGFUSE_HOST=${{ vars.LANGFUSE_HOST }}
+          FINANCIAL_DATASETS_API_KEY=${{ secrets.FINANCIAL_DATASETS_API_KEY }}
           # UID=$CURRENT_UID
           # GID=$CURRENT_GID
           EOF
