@@ -47,7 +47,7 @@ class Node(ABC):
         self._logger_name = f"market_agent.nodes.{self.__class__.__name__.lower()}"
         self.logger = setup_logger(self._logger_name)
         self.DEFAULT_LLM_MODEL = "gpt-4o-mini"
-        
+
         # Langfuse callback handler setup
         self.langfuse_enabled = os.getenv("LANGFUSE_ENABLED", "false").lower() == "true"
         if self.langfuse_enabled:
@@ -71,7 +71,7 @@ class Node(ABC):
 
     def invoke(self, query: str) -> RawResponse:
         return self._invoke(query)
-    
+
     def _get_callback_config(self):
         """Get callback configuration for langchain operations"""
         if self.langfuse_enabled and self._langfuse_handler:
