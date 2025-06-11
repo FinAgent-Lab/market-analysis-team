@@ -89,7 +89,6 @@ def main(
     graph_builder.add_node(StockInfoNode())  # TODO: 종합 처리 기능 적용 시 주석 해제
     graph_builder.add_node(CompanyFactsAnalyzerNode())
 
-
     # 한투 API 분석 에이전트 노드 주석 처리 (미국 주식 노드로 대체)
     # graph_builder.add_node(HantooFinancialAnalyzerNode())
 
