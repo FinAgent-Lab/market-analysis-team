@@ -28,6 +28,7 @@ dependencies = [
     "opik==1.7.9",
     "yfinance==0.2.59",
     "langfuse>=2.60.6",
+    "langchain-naver-community>=0.2.0",
 ]
 
 [dependency-groups]

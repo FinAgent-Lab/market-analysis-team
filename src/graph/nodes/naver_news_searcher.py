@@ -5,7 +5,7 @@ from langchain_core.messages import HumanMessage
 
 from src.graph.nodes.base import Node
 from src.models.do import RawResponse
-from src.tools.naver_searcher.tool import NaverNewsSearch
+from langchain_naver_community.tool import NaverNewsSearch
 
 
 class NaverNewsSearcherNode(Node):
@@ -14,10 +14,12 @@ class NaverNewsSearcherNode(Node):
         self.system_prompt = (
             "You are a news search agent for korean news using naver search api."
             "Only use korean source and data to conduct news search."
+            "When a specific date is requested and no news results are found for that date, "
+            "clearly respond that no news could be found for the specified date."
             "Do nothing else"
         )
         self.agent = None
-        self.tools = [NaverNewsSearch(sort="date")]
+        self.tools = [NaverNewsSearch(sort="sim")]
 
     def _run(self, state: dict) -> dict:
         if self.agent is None:
