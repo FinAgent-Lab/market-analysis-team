@@ -178,3 +178,9 @@ cython_debug/
 
 # ruff
 .ruff_cache/
+
+# 백테스팅 임시/수정 파일들
+backtesting/fix_*.py
+backtesting/add_*.py
+backtesting/update_*.py
+backtesting/fix/*

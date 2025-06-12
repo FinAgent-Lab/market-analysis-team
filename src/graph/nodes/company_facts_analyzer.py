@@ -5,21 +5,23 @@ from langchain_core.messages import HumanMessage
 
 from src.graph.nodes.base import Node
 from src.models.do import RawResponse
-from langchain_naver_community.tool import NaverNewsSearch
+from src.tools.company_facts.tool import CompanyFactsTool
 
 
-class NaverNewsSearcherNode(Node):
+class CompanyFactsAnalyzerNode(Node):
     def __init__(self):
         super().__init__()
+
         self.system_prompt = (
-            "You are a news search agent for korean news using naver search api."
-            "Only use korean source and data to conduct news search."
-            "When a specific date is requested and no news results are found for that date, "
-            "clearly respond that no news could be found for the specified date."
-            "Do nothing else"
+            "You are a tool executor. Extract the ticker from the query and use CompanyFactsTool. "
+            "Your ONLY job is to return the exact output from CompanyFactsTool without any changes. "
+            "DO NOT analyze, summarize, or modify the tool's output in any way. "
+            "DO NOT add your own commentary or interpretation. "
+            "The tool already provides perfectly formatted information. "
+            "Return the tool's raw output as your final answer."
         )
         self.agent = None
-        self.tools = [NaverNewsSearch(sort="sim")]
+        self.tools = [CompanyFactsTool()]
 
     def _run(self, state: dict) -> dict:
         if self.agent is None:
@@ -37,7 +39,7 @@ class NaverNewsSearcherNode(Node):
                 "messages": [
                     HumanMessage(
                         content=result["messages"][-1].content,
-                        name=self.__class__.__name__.lower().replace("node", ""),
+                        name="company_facts_analyzer",
                     )
                 ]
             },
@@ -50,6 +52,7 @@ class NaverNewsSearcherNode(Node):
             self.tools,
             prompt=self.system_prompt,
         )
-        config = self._get_callback_config()
-        result = agent.invoke({"messages": [("human", query)]}, config=config)
+        # config = self._get_callback_config()
+        # result = agent.invoke({"messages": [("human", query)]}, config=config)
+        result = agent.invoke({"messages": [("human", query)]})
         return RawResponse(answer=result["messages"][-1].content)

@@ -74,5 +74,7 @@ class GoogleSearcherNode(Node):
             self.tools,
             prompt=self.system_prompt,
         )
+        # config = self._get_callback_config()
+        # result = agent.invoke({"messages": [("human", query)]}, config=config)
         result = agent.invoke({"messages": [("human", query)]})
         return RawResponse(answer=result["messages"][-1].content)

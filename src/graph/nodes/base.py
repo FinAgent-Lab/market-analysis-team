@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 from functools import wraps
 import time
+import os
 from rich.console import Console
 
 from src.models.do import RawResponse
 from src.utils.logger import setup_logger
+from langfuse.callback import CallbackHandler
 
 console = Console()
 
@@ -46,6 +48,17 @@ class Node(ABC):
         self.logger = setup_logger(self._logger_name)
         self.DEFAULT_LLM_MODEL = "gpt-4o-mini"
 
+        # Langfuse callback handler setup
+        self.langfuse_enabled = os.getenv("LANGFUSE_ENABLED", "false").lower() == "true"
+        if self.langfuse_enabled:
+            self._langfuse_handler = CallbackHandler(
+                public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+                secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
+                host=os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com"),
+            )
+        else:
+            self._langfuse_handler = None
+
     @logging_node
     def __call__(self, *args, **kwargs):
         return self._run(*args, **kwargs)
@@ -58,3 +71,9 @@ class Node(ABC):
 
     def invoke(self, query: str) -> RawResponse:
         return self._invoke(query)
+
+    def _get_callback_config(self):
+        """Get callback configuration for langchain operations"""
+        if self.langfuse_enabled and self._langfuse_handler:
+            return {"callbacks": [self._langfuse_handler]}
+        return {}

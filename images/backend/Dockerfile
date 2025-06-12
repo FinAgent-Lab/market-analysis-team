@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+ENV PYTHONDONTWRITEBYTECODE=1
+
 # Poetry 대신 uv 설치
 RUN pip install uv
 
