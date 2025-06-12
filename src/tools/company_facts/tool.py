@@ -1,56 +1,35 @@
 import os
 import requests
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from langchain_core.tools import BaseTool
+from langchain_core.utils import get_from_dict_or_env
+from pydantic import BaseModel, ConfigDict, SecretStr, model_validator, Field
 
 from src.data.models import CompanyFactsResponse
 
 
-class CompanyFactsTool(BaseTool):
-    """회사 기본 정보 조회 도구"""
+class CompanyFactsAPIWrapper(BaseModel):
+    """Wrapper for Financial Datasets API with secure API key handling."""
     
-    name: str = "company_facts_search"
-    description: str = (
-        "Retrieve comprehensive company information including basic facts, "
-        "market data, and business details for a given stock ticker. "
-        "Input should be a valid stock ticker symbol (e.g., AAPL, MSFT, GOOGL)."
+    financial_datasets_api_key: SecretStr
+    
+    model_config = ConfigDict(
+        extra="forbid",
     )
     
-    def _run(self, ticker: str) -> str:
-        """회사 정보 조회 실행"""
-        try:
-            # 티커 정리
-            ticker = ticker.strip().upper()
-            
-            # API 키 확인
-            api_key = os.environ.get("FINANCIAL_DATASETS_API_KEY")
-            
-            if not api_key:
-                return """
-❌ **API Key 설정 오류**
-
-회사 정보 조회를 위해서는 FINANCIAL_DATASETS_API_KEY 환경 변수 설정이 필요합니다.
-
-**설정 방법:**
-1. .env 파일에 다음과 같이 추가:
-   ```
-   FINANCIAL_DATASETS_API_KEY=your_api_key_here
-   ```
-2. 관리자에게 API Key 발급을 요청하세요.
-3. API Key 설정 후 서비스를 다시 시작하세요.
-
-더 자세한 정보는 관리자에게 문의해주세요.
-"""
-            
-            # Financial Datasets API 사용
-            return self._get_from_financial_datasets_api(ticker, api_key)
-                
-        except Exception as e:
-            return f"❌ 회사 정보 조회 중 오류 발생: {str(e)}"
+    @model_validator(mode="before")
+    @classmethod
+    def validate_environment(cls, values: Dict) -> Dict:
+        financial_datasets_api_key = get_from_dict_or_env(
+            values, "financial_datasets_api_key", "FINANCIAL_DATASETS_API_KEY"
+        )
+        values["financial_datasets_api_key"] = financial_datasets_api_key
+        return values
     
-    def _get_from_financial_datasets_api(self, ticker: str, api_key: str) -> str:
+    def get_company_facts(self, ticker: str) -> str:
         """Financial Datasets API를 통한 회사 정보 조회"""
         try:
+            api_key = self.financial_datasets_api_key.get_secret_value()
             headers = {"X-API-KEY": api_key}
             url = f"https://api.financialdatasets.ai/company/facts/?ticker={ticker}"
             
@@ -61,6 +40,7 @@ class CompanyFactsTool(BaseTool):
 ❌ **API Key 인증 실패**
 
 제공된 FINANCIAL_DATASETS_API_KEY가 유효하지 않습니다.
+GitHub Secrets에서 올바른 API 키가 설정되었는지 확인해주세요.
 """
             
             if response.status_code != 200:
@@ -168,3 +148,71 @@ class CompanyFactsTool(BaseTool):
 """
         
         return result
+
+
+class CompanyFactsTool(BaseTool):
+    """회사 기본 정보 조회 도구"""
+    
+    name: str = "company_facts_search"
+    description: str = (
+        "Retrieve comprehensive company information including basic facts, "
+        "market data, and business details for a given stock ticker. "
+        "Input should be a valid stock ticker symbol (e.g., AAPL, MSFT, GOOGL)."
+    )
+    
+    # Pydantic 필드로 선언
+    api_wrapper: Optional[CompanyFactsAPIWrapper] = Field(default=None, exclude=True)
+    init_error: Optional[str] = Field(default=None, exclude=True)
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._initialize_api()
+    
+    def _initialize_api(self):
+        """API Wrapper 초기화"""
+        try:
+            # API Wrapper 초기화 (환경변수에서 자동으로 API 키 로드)
+            self.api_wrapper = CompanyFactsAPIWrapper()
+        except Exception as e:
+            self.api_wrapper = None
+            self.init_error = str(e)
+    
+    def _run(self, ticker: str) -> str:
+        """회사 정보 조회 실행"""
+        try:
+            # 티커 정리
+            ticker = ticker.strip().upper()
+            
+            # API Wrapper 초기화 확인
+            if self.api_wrapper is None:
+                error_msg = getattr(self, 'init_error', 'Unknown error')
+                return f"""
+❌ **API 초기화 실패**
+
+Financial Datasets API 초기화 중 오류가 발생했습니다.
+
+**오류 내용:** {error_msg}
+
+**해결 방법:**
+1. GitHub Secrets에 FINANCIAL_DATASETS_API_KEY가 올바르게 설정되었는지 확인
+2. API 키가 유효하고 활성화되어 있는지 확인
+3. 환경 변수가 올바르게 로드되었는지 확인
+
+관리자에게 문의하여 API 키 설정을 확인해주세요.
+"""
+            
+            # API를 통한 회사 정보 조회
+            return self.api_wrapper.get_company_facts(ticker)
+                
+        except Exception as e:
+            return f"❌ 회사 정보 조회 중 오류 발생: {str(e)}"
+    
+    async def _arun(self, ticker: str) -> str:
+        """비동기 실행 (동기 실행과 동일)"""
+        return self._run(ticker)
+
+
+# 하위 호환성을 위한 팩토리 함수
+def create_company_facts_tool() -> CompanyFactsTool:
+    """CompanyFactsTool 인스턴스를 생성하여 반환"""
+    return CompanyFactsTool()
