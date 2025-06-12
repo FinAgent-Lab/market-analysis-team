@@ -1,10 +1,15 @@
+import os
 import requests
 from typing import Dict, Any, Optional
 from langchain_core.tools import BaseTool
 from langchain_core.utils import get_from_dict_or_env
 from pydantic import BaseModel, ConfigDict, SecretStr, model_validator, Field
+from dotenv import load_dotenv
 
 from src.data.models import CompanyFactsResponse
+
+# 환경 변수 로드
+load_dotenv()
 
 
 class CompanyFactsAPIWrapper(BaseModel):
@@ -19,10 +24,31 @@ class CompanyFactsAPIWrapper(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def validate_environment(cls, values: Dict) -> Dict:
-        financial_datasets_api_key = get_from_dict_or_env(
-            values, "financial_datasets_api_key", "FINANCIAL_DATASETS_API_KEY"
-        )
-        values["financial_datasets_api_key"] = financial_datasets_api_key
+        # 직접 환경 변수에서 가져오기 시도
+        api_key = None
+        
+        # 여러 방법으로 API 키 시도
+        if "financial_datasets_api_key" in values:
+            api_key = values["financial_datasets_api_key"]
+        elif "FINANCIAL_DATASETS_API_KEY" in values:
+            api_key = values["FINANCIAL_DATASETS_API_KEY"]
+        else:
+            # 환경 변수에서 직접 가져오기
+            api_key = os.getenv("FINANCIAL_DATASETS_API_KEY")
+            if not api_key:
+                # get_from_dict_or_env 사용
+                api_key = get_from_dict_or_env(
+                    values, "financial_datasets_api_key", "FINANCIAL_DATASETS_API_KEY"
+                )
+        
+        if not api_key:
+            raise ValueError(
+                "Financial Datasets API key not found. "
+                "Please set FINANCIAL_DATASETS_API_KEY environment variable or "
+                "pass financial_datasets_api_key as a parameter."
+            )
+        
+        values["financial_datasets_api_key"] = api_key
         return values
     
     def get_company_facts(self, ticker: str) -> str:
@@ -148,7 +174,6 @@ GitHub Secrets에서 올바른 API 키가 설정되었는지 확인해주세요.
         
         return result
 
-
 class CompanyFactsTool(BaseTool):
     """회사 기본 정보 조회 도구"""
     
@@ -170,9 +195,21 @@ class CompanyFactsTool(BaseTool):
     def _initialize_api(self):
         """API Wrapper 초기화"""
         try:
+            # 환경 변수 다시 로드
+            load_dotenv()
+            
+            # 디버깅을 위한 환경 변수 확인
+            api_key = os.getenv("FINANCIAL_DATASETS_API_KEY")
+            print(f"🔍 Debug: FINANCIAL_DATASETS_API_KEY found: {'Yes' if api_key else 'No'}")
+            if api_key:
+                print(f"🔑 API Key preview: {api_key[:8]}...")
+            
             # API Wrapper 초기화 (환경변수에서 자동으로 API 키 로드)
             self.api_wrapper = CompanyFactsAPIWrapper()
+            print("✅ CompanyFactsAPIWrapper 초기화 성공")
+            
         except Exception as e:
+            print(f"❌ CompanyFactsAPIWrapper 초기화 실패: {e}")
             self.api_wrapper = None
             self.init_error = str(e)
     
@@ -185,6 +222,16 @@ class CompanyFactsTool(BaseTool):
             # API Wrapper 초기화 확인
             if self.api_wrapper is None:
                 error_msg = getattr(self, 'init_error', 'Unknown error')
+                
+                # 환경 변수 상태 확인
+                env_status = f"""
+🔧 **환경 변수 상태 확인:**
+• FINANCIAL_DATASETS_API_KEY 존재: {'Yes' if os.getenv('FINANCIAL_DATASETS_API_KEY') else 'No'}
+• 환경 변수 값 미리보기: {os.getenv('FINANCIAL_DATASETS_API_KEY', 'Not found')[:8]}...
+• .env 파일 위치: {os.path.join(os.getcwd(), '.env')}
+• .env 파일 존재: {'Yes' if os.path.exists('.env') else 'No'}
+"""
+                
                 return f"""
 ❌ **API 초기화 실패**
 
@@ -192,12 +239,16 @@ Financial Datasets API 초기화 중 오류가 발생했습니다.
 
 **오류 내용:** {error_msg}
 
-**해결 방법:**
-1. GitHub Secrets에 FINANCIAL_DATASETS_API_KEY가 올바르게 설정되었는지 확인
-2. API 키가 유효하고 활성화되어 있는지 확인
-3. 환경 변수가 올바르게 로드되었는지 확인
+{env_status}
 
-관리자에게 문의하여 API 키 설정을 확인해주세요.
+**해결 방법:**
+1. .env 파일에 FINANCIAL_DATASETS_API_KEY가 올바르게 설정되었는지 확인
+2. 환경 변수 이름에 오타가 없는지 확인 (대소문자 구분)
+3. API 키가 유효하고 활성화되어 있는지 확인
+4. 애플리케이션 재시작 후 다시 시도
+
+GitHub Secrets 설정 (배포 시):
+• FINANCIAL_DATASETS_API_KEY = your_api_key_here
 """
             
             # API를 통한 회사 정보 조회
@@ -209,7 +260,6 @@ Financial Datasets API 초기화 중 오류가 발생했습니다.
     async def _arun(self, ticker: str) -> str:
         """비동기 실행 (동기 실행과 동일)"""
         return self._run(ticker)
-
 
 # 하위 호환성을 위한 팩토리 함수
 def create_company_facts_tool() -> CompanyFactsTool:
