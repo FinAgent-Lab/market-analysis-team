@@ -12,6 +12,8 @@ from .alpha_vantage_stability import (
     calculate_overall_stability_assessment,
 )
 from .alpha_vantage_formatters import format_financial_analysis
+from .alpha_vantage_scoring import FinancialScoringSystem
+
 
 # Integrate analysis functions
 def analyze_financial_data(api_wrapper, data: dict) -> dict:
@@ -98,6 +100,35 @@ def analyze_financial_data(api_wrapper, data: dict) -> dict:
     analysis = calculate_overall_profitability_assessment(analysis)
     analysis = calculate_overall_stability_assessment(analysis)
 
+    # ===== 간단한 점수화 시스템 통합 =====
+    try:
+        # 점수화 시스템 초기화
+        scoring_system = FinancialScoringSystem()
+
+        # 기존 분석 결과에서 점수 계산
+        financial_scores = scoring_system.calculate_financial_scores(analysis)
+
+        # 점수 정보를 analysis에 추가
+        analysis['financial_scores'] = financial_scores
+
+        # 점수 요약도 추가 (formatter에서 사용)
+        analysis['score_summary'] = scoring_system.format_score_summary(financial_scores)
+
+    except Exception as e:
+        print(f"Error in scoring calculation: {e}")
+        # 점수 계산 실패 시에도 기존 분석은 유지
+        analysis['financial_scores'] = {
+            'overall_score': 0,
+            'overall_grade': 'N/A',
+            'profitability_score': 0,
+            'profitability_grade': 'N/A',
+            'stability_score': 0,
+            'stability_grade': 'N/A',
+            'error': str(e)
+        }
+        analysis['score_summary'] = "점수 계산을 완료할 수 없습니다."
+    # ===== 점수화 시스템 통합 끝 =====
+
     return analysis
 
 
@@ -105,4 +136,5 @@ __all__ = [
     "AlphaVantageAPIWrapper",
     "analyze_financial_data",
     "format_financial_analysis",
+    "FinancialScoringSystem",
 ]

@@ -60,8 +60,8 @@ class ReportAssistantNode(Node):
             self.tools,
             prompt=self.template_instruction,
         )
-
-        result = agent.invoke({"messages": [("human", query)]})
+        config = self._get_callback_config()
+        result = agent.invoke({"messages": [("human", query)]}, config=config)
         return result["messages"][-1].content
 
     def _load_template(self):

@@ -1335,6 +1335,19 @@ wheels = [
 ]
 
 [[package]]
+name = "langchain-naver-community"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "langchain" },
+    { name = "pydantic" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/00/6b/384bbbc5ca26a085eb9b1836c41767dcdc2915f1700b3beea1a2a90a0a0d/langchain_naver_community-0.2.0-py3-none-any.whl", hash = "sha256:13de737cadd0d0a9a552e79396a6612ce7ec4e0a0cc990928ebee1537b57e357", size = 7453 },
+]
+
+[[package]]
 name = "langchain-openai"
 version = "0.3.16"
 source = { registry = "https://pypi.org/simple" }
@@ -1744,6 +1757,7 @@ dependencies = [
     { name = "langchain-community", version = "0.3.21", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13' and platform_machine == 'x86_64' and sys_platform == 'darwin'" },
     { name = "langchain-community", version = "0.3.23", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13' or platform_machine != 'x86_64' or sys_platform != 'darwin'" },
     { name = "langchain-milvus" },
+    { name = "langchain-naver-community" },
     { name = "langchain-openai" },
     { name = "langchain-upstage" },
     { name = "langfuse" },
@@ -1777,6 +1791,7 @@ requires-dist = [
     { name = "langchain", specifier = ">=0.3.20" },
     { name = "langchain-community", specifier = ">=0.3.19" },
     { name = "langchain-milvus", specifier = ">=0.1.8" },
+    { name = "langchain-naver-community", specifier = ">=0.2.0" },
     { name = "langchain-openai", specifier = ">=0.3.7" },
     { name = "langchain-upstage", specifier = ">=0.6.0" },
     { name = "langfuse", specifier = ">=2.60.6" },

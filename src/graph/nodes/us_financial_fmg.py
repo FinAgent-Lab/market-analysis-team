@@ -45,6 +45,8 @@ class StockInfoNode(Node):
         )
 
     def _invoke(self, query: str) -> RawResponse:
+        # config = self._get_callback_config()
+        # result = self.executor.invoke({"message": [HumanMessage(content=query)]}, config=config)
         result = self.executor.invoke({"message": [HumanMessage(content=query)]})
         if result and isinstance(result, dict) and "messages" in result:
             return RawResponse(answer=result["messages"][-1].content)
