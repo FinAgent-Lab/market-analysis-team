@@ -5,7 +5,7 @@ import uvicorn
 # from apscheduler.schedulers.background import BackgroundScheduler
 
 from api.server import APIBuilder
-from src.graph.nodes.us_financial_fmg import StockInfoNode
+# from src.graph.nodes.us_financial_fmg import StockInfoNode
 from src.graph.nodes import (
     NaverNewsSearcherNode,
     ReportAssistantNode,
