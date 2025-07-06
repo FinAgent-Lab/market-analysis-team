@@ -43,11 +43,24 @@ class USFinancialStatementTool(BaseTool):
     def llm(self, value):
         self._llm = value
 
+    def _create_default_llm(self):
+        """Create default LLM when not available."""
+        from langchain_openai import ChatOpenAI
+        import os
+
+        return ChatOpenAI(
+            model=os.getenv("MAIN_LLM_MODEL", "gpt-4o-mini"),
+            temperature=0,
+            base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+            openai_api_key=os.getenv("OPENAI_API_KEY"),
+        )
+
     def _extract_ticker_and_date(self, query: str) -> Tuple[Optional[str], Optional[str]]:
         """Extract both ticker symbol and analysis date from query."""
         if self.llm is None:
-            print("LLM is not available")
-            return None, None
+            print("LLM is not available - creating default LLM")
+            # 기본 LLM 생성
+            self._llm = self._create_default_llm()
 
         prompt = f"""
         Extract the ticker symbol and analysis date from this financial query:
@@ -82,8 +95,16 @@ class USFinancialStatementTool(BaseTool):
         """
 
         try:
-            response = self.llm.invoke(prompt)
-            result = response.content.strip().upper()
+            # LLM 호출 시 올바른 형태로 호출
+            response = self.llm.invoke([{"role": "user", "content": prompt}])
+
+            # response가 다양한 형태일 수 있으므로 안전하게 처리
+            if hasattr(response, 'content'):
+                result = response.content.strip().upper()
+            elif isinstance(response, str):
+                result = response.strip().upper()
+            else:
+                result = str(response).strip().upper()
 
             if "|" in result:
                 ticker, date = result.split("|", 1)
@@ -111,7 +132,43 @@ class USFinancialStatementTool(BaseTool):
 
         except Exception as e:
             print(f"Error extracting ticker and date: {e}")
-            return None, None
+            # 에러 발생 시 간단한 패턴 매칭으로 fallback
+            return self._simple_ticker_extraction(query)
+
+    def _simple_ticker_extraction(self, query: str) -> Tuple[Optional[str], Optional[str]]:
+        """Simple fallback ticker extraction without LLM."""
+        import re
+
+        # 간단한 패턴 매칭
+        query_upper = query.upper()
+
+        # 티커 패턴 찾기 (1-5자 대문자)
+        ticker_pattern = r'\b([A-Z]{1,5})\b'
+        matches = re.findall(ticker_pattern, query_upper)
+
+        # 회사명 매핑
+        company_mapping = {
+            'APPLE': 'AAPL',
+            'MICROSOFT': 'MSFT',
+            'GOOGLE': 'GOOGL',
+            'AMAZON': 'AMZN',
+            'TESLA': 'TSLA',
+            'META': 'META',
+            'NVIDIA': 'NVDA',
+        }
+
+        # 회사명에서 티커 찾기
+        for company, ticker in company_mapping.items():
+            if company in query_upper:
+                return ticker, None
+
+        # 티커 패턴 매치에서 유효한 것 찾기
+        valid_tickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'NFLX', 'AMD', 'INTC']
+        for match in matches:
+            if match in valid_tickers:
+                return match, None
+
+        return None, None
 
     def _filter_data_by_date(self, data: Dict, target_date: str, report_type: str = "annualReports") -> Dict:
         """Filter financial data to get the most recent report before or on target date."""
