@@ -2,9 +2,11 @@ from dotenv import load_dotenv
 
 from dependency_injector.wiring import Provide, inject
 import uvicorn
+
 # from apscheduler.schedulers.background import BackgroundScheduler
 
 from api.server import APIBuilder
+
 # from src.graph.nodes.us_financial_fmg import StockInfoNode
 from src.graph.nodes import (
     NaverNewsSearcherNode,
@@ -15,7 +17,8 @@ from src.graph.nodes import (
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
     USFinancialAnalyzerNode,
-    GoogleSearcherNode,
+    GoogleSearchAPINode,
+    GoogleCrawlerNode,
     CompanyFactsAnalyzerNode,
 )
 from src.utils.logger import setup_logger
@@ -24,6 +27,7 @@ from src.graph.builder import SupervisorGraphBuilder
 # from src.tasks.weekly_recap_scraper import scrape_jp_weekly_recap
 from startup import Container
 from rich.console import Console
+
 # import os
 
 
@@ -79,7 +83,8 @@ def main(
     """
 
     graph_builder.add_node(NaverNewsSearcherNode())
-    graph_builder.add_node(GoogleSearcherNode())
+    graph_builder.add_node(GoogleSearchAPINode())  # API 기반
+    graph_builder.add_node(GoogleCrawlerNode())    # 크롤링 기반 (새로 추가)
     graph_builder.add_node(RetrieveESGNode())
     graph_builder.add_node(ReportAssistantNode())
     # graph_builder.add_node(WeeklyReporterNode())

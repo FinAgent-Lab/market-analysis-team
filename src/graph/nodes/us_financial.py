@@ -21,7 +21,6 @@ class USFinancialAnalyzerNode(Node):
             "You are a financial statement analysis agent for US stocks. "
             "Your task is to analyze balance sheets, income statements, and financial ratios "
             "to provide a comprehensive assessment of a company's financial health, growth potential, and profitability. "
-
             "IMPORTANT SCORING REQUIREMENTS: "
             "- The analysis includes a comprehensive financial scoring system (0-100 points) with letter grades (A+ to D). "
             "- You MUST prominently display the financial scores throughout your analysis: "
@@ -29,7 +28,6 @@ class USFinancialAnalyzerNode(Node):
             "  * Profitability Score: X/100 points (Grade) "
             "  * Stability Score: X/100 points (Grade) "
             "  * Individual metric scores in respective sections (ROE, ROA, Operating Margin, Current Ratio, Debt-to-Equity) "
-
             "- Include scores alongside traditional metrics in profitability and stability sections. "
             "- Use the scoring system to enhance investment perspective: "
             "  * 90-100 points (A+): Exceptional - Highly recommended "
@@ -38,11 +36,9 @@ class USFinancialAnalyzerNode(Node):
             "  * 60-69 points (B): Average - Careful review needed "
             "  * 50-59 points (C+): Below average - Improvement needed "
             "  * Below 50 (C-D): Weak - Caution required "
-
             "- Connect quantitative scores with qualitative analysis explanations. "
             "- Always highlight the overall financial score prominently in your response. "
             "- Maintain professional tone while making scores easily understandable for investors. "
-
             "Users can mention either a company name (like Apple, Microsoft) or a ticker symbol (like AAPL, MSFT). "
             "Present your findings clearly and concisely, but do not provide investment advice or recommendations. "
             "Only if no company name or ticker can be identified, ask for clarification. "
@@ -117,7 +113,9 @@ class USFinancialAnalyzerNode(Node):
 
             # 분석 결과 로깅 (미리보기만)
             log_preview = (
-                analysis_text[:200] + "..." if len(analysis_text) > 200 else analysis_text
+                analysis_text[:200] + "..."
+                if len(analysis_text) > 200
+                else analysis_text
             )
             self.logger.info(f"재무분석 완료 [{agent_start_time}~{agent_end_time}]")
             self.logger.debug(f"분석 결과 미리보기: {log_preview}")
@@ -136,7 +134,7 @@ class USFinancialAnalyzerNode(Node):
                         "ticker": extracted_ticker,
                         "market": "US",
                         "analysis_text": analysis_text,
-                        "timestamp": self._get_current_time()
+                        "timestamp": self._get_current_time(),
                     },
                 },
                 goto="supervisor",
@@ -147,7 +145,9 @@ class USFinancialAnalyzerNode(Node):
             return command
 
         except Exception as e:
-            self.logger.error(f"재무분석 노드 실행 중 오류 발생: {str(e)}", exc_info=True)
+            self.logger.error(
+                f"재무분석 노드 실행 중 오류 발생: {str(e)}", exc_info=True
+            )
 
             # 오류 발생 시에도 적절한 응답 반환
             error_message = f"재무분석 중 오류가 발생했습니다: {str(e)}"
@@ -164,7 +164,7 @@ class USFinancialAnalyzerNode(Node):
                         "market": "US",
                         "analysis_text": error_message,
                         "error": str(e),
-                        "timestamp": self._get_current_time()
+                        "timestamp": self._get_current_time(),
                     },
                 },
                 goto="supervisor",

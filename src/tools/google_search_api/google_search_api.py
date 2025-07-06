@@ -68,43 +68,50 @@ class GoogleSearchAPIWrapper(BaseModel):
             try:
                 with urllib.request.urlopen(request) as response:
                     if response.getcode() == 200:
-                        current_response_json = json.loads(response.read().decode("utf-8"))
+                        current_response_json = json.loads(
+                            response.read().decode("utf-8")
+                        )
                         if first_response_json is None:
                             first_response_json = current_response_json
-                        
+
                         current_items = current_response_json.get("items", [])
                         all_items.extend(current_items)
                         results_fetched_count += len(current_items)
-                        
-                        if not current_items or len(current_items) < num_to_fetch_this_call:
-                            break 
-                        
+
+                        if (
+                            not current_items
+                            or len(current_items) < num_to_fetch_this_call
+                        ):
+                            break
+
                         start_index += MAX_RESULTS_PER_GOOGLE_CALL
                     else:
                         raise Exception(f"Error Code: {response.getcode()}")
             except urllib.error.HTTPError as e:
                 raise Exception(f"Error Code: {e.code}, Reason: {e.reason}")
-            
+
             # Google typically limits to 100 results total (10 pages of 10)
-            if start_index > 100 and num_total_results > MAX_RESULTS_PER_GOOGLE_CALL: 
-                 break
+            if start_index > 100 and num_total_results > MAX_RESULTS_PER_GOOGLE_CALL:
+                break
 
         final_response_dict = {}
         if first_response_json:
             final_response_dict = first_response_json.copy()
-        
+
         final_response_dict["items"] = all_items
         if not first_response_json and not all_items:
-             return {"items": []}
-        elif not first_response_json and all_items: # Should ideally not be hit if all_items has content
-             return {"items": all_items}
+            return {"items": []}
+        elif (
+            not first_response_json and all_items
+        ):  # Should ideally not be hit if all_items has content
+            return {"items": all_items}
 
         return final_response_dict
 
     def results(
         self,
         query: str,
-        num_total_results: int = 30, # Default to 30 results
+        num_total_results: int = 30,  # Default to 30 results
     ) -> List[Dict]:
         raw = self.raw_results(query, num_total_results=num_total_results)
         if "items" not in raw:
@@ -127,11 +134,12 @@ class GoogleSearchAPIWrapper(BaseModel):
         async with aiohttp.ClientSession() as session:
             while results_fetched_count < num_total_results:
                 num_to_fetch_this_call = min(
-                    MAX_RESULTS_PER_GOOGLE_CALL, num_total_results - results_fetched_count
+                    MAX_RESULTS_PER_GOOGLE_CALL,
+                    num_total_results - results_fetched_count,
                 )
                 if num_to_fetch_this_call <= 0:
                     break
-                
+
                 params = {
                     "key": api_key,
                     "cx": cse_id,
@@ -140,7 +148,7 @@ class GoogleSearchAPIWrapper(BaseModel):
                     "num": num_to_fetch_this_call,
                     "start": start_index,
                 }
-                
+
                 async with session.get(GOOGLE_API_URL, params=params) as response:
                     if response.status == 200:
                         current_response_json = json.loads(await response.text())
@@ -151,32 +159,38 @@ class GoogleSearchAPIWrapper(BaseModel):
                         all_items.extend(current_items)
                         results_fetched_count += len(current_items)
 
-                        if not current_items or len(current_items) < num_to_fetch_this_call:
+                        if (
+                            not current_items
+                            or len(current_items) < num_to_fetch_this_call
+                        ):
                             break
-                        
+
                         start_index += MAX_RESULTS_PER_GOOGLE_CALL
                     else:
                         raise Exception(f"Error {response.status}: {response.reason}")
-                
-                if start_index > 100 and num_total_results > MAX_RESULTS_PER_GOOGLE_CALL:
+
+                if (
+                    start_index > 100
+                    and num_total_results > MAX_RESULTS_PER_GOOGLE_CALL
+                ):
                     break
-        
+
         final_response_dict = {}
         if first_response_json:
             final_response_dict = first_response_json.copy()
-        
+
         final_response_dict["items"] = all_items
         if not first_response_json and not all_items:
-             return {"items": []}
+            return {"items": []}
         elif not first_response_json and all_items:
-             return {"items": all_items}
-             
+            return {"items": all_items}
+
         return final_response_dict
 
     async def results_async(
         self,
         query: str,
-        num_total_results: int = 30, # Default to 30 results
+        num_total_results: int = 30,  # Default to 30 results
     ) -> List[Dict]:
         raw = await self.raw_results_async(query, num_total_results=num_total_results)
         if "items" not in raw:
@@ -207,7 +221,7 @@ class GoogleSearchAPIWrapper(BaseModel):
         query: str,
         embedding_model: str = "text-embedding-3-small",
         top_n: int = 15,
-        num_search_results: int = 30, # Number of results to fetch before filtering
+        num_search_results: int = 30,  # Number of results to fetch before filtering
     ) -> List[Dict]:
         """Retrieve and rank search results by semantic similarity to the query."""
         # 1) Retrieve base results
@@ -241,7 +255,7 @@ class GoogleSearchAPIWrapper(BaseModel):
         query: str,
         embedding_model: str = "text-embedding-3-small",
         top_n: int = 15,
-        num_search_results: int = 30, # Number of results to fetch before filtering
+        num_search_results: int = 30,  # Number of results to fetch before filtering
     ) -> List[Dict]:
         """Async version of filtered_results."""
         results = await self.results_async(query, num_total_results=num_search_results)
@@ -254,12 +268,14 @@ class GoogleSearchAPIWrapper(BaseModel):
         valid_desc = [descriptions[i] for i in valid_indices]
         valid_res = [results[i] for i in valid_indices]
         embedder = OpenAIEmbeddings(model=embedding_model)
-        # Note: embed_documents and embed_query might be blocking. 
+        # Note: embed_documents and embed_query might be blocking.
         # For a truly async operation, consider using their async counterparts if available
         # or running them in a thread pool executor.
         # For now, assuming Langchain handles this or it's acceptable.
-        desc_embs = await embedder.aembed_documents(valid_desc) # Assuming aembed_documents exists
-        query_emb = await embedder.aembed_query(query) # Assuming aembed_query exists
+        desc_embs = await embedder.aembed_documents(
+            valid_desc
+        )  # Assuming aembed_documents exists
+        query_emb = await embedder.aembed_query(query)  # Assuming aembed_query exists
 
         q_np = np.array(query_emb)
         sims = []

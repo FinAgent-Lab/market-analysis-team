@@ -29,6 +29,8 @@ dependencies = [
     "yfinance==0.2.59",
     "langfuse>=2.60.6",
     "langchain-naver-community>=0.2.0",
+    "beautifulsoup4>=4.13.4",
+    "tenacity>=9.1.2",
 ]
 
 [dependency-groups]

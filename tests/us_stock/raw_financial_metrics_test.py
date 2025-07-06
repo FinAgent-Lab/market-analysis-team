@@ -42,7 +42,12 @@ class TestRawFinancialMetrics(unittest.TestCase):
 
         # Additional outputs for inspection
         print("\n===== Raw Financial Metrics for AAPL =====")
-        for key in ["ReturnOnEquityTTM", "ReturnOnAssetsTTM", "OperatingMarginTTM", "ProfitMargin"]:
+        for key in [
+            "ReturnOnEquityTTM",
+            "ReturnOnAssetsTTM",
+            "OperatingMarginTTM",
+            "ProfitMargin",
+        ]:
             if key in result:
                 print(f"{key}: {result[key]}")
                 # Try to convert to float and multiply by 100
@@ -67,7 +72,12 @@ class TestRawFinancialMetrics(unittest.TestCase):
 
         # Additional outputs for inspection
         print("\n===== Raw Financial Metrics for MSFT =====")
-        for key in ["ReturnOnEquityTTM", "ReturnOnAssetsTTM", "OperatingMarginTTM", "ProfitMargin"]:
+        for key in [
+            "ReturnOnEquityTTM",
+            "ReturnOnAssetsTTM",
+            "OperatingMarginTTM",
+            "ProfitMargin",
+        ]:
             if key in result:
                 print(f"{key}: {result[key]}")
                 # Try to convert to float and multiply by 100

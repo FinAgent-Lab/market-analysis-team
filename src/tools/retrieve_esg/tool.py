@@ -15,6 +15,14 @@ class ESGDataInput(BaseModel):
     """Input for the ESG Data tool."""
 
     ticker: str = Field(description="The stock ticker symbol to get ESG data for.")
+    year: Optional[int] = Field(
+        description="Target year for ESG data (optional, uses latest if not specified).",
+        default=None,
+    )
+    month: Optional[int] = Field(
+        description="Target month for ESG data (optional, uses latest if not specified).",
+        default=None,
+    )
     force_refresh: bool = Field(
         description="Whether to force refresh data from yfinance.", default=False
     )
@@ -27,7 +35,9 @@ class ESGDataTool(BaseTool):
     description: str = (
         "Useful when you need to get ESG (Environmental, Social, Governance) "
         "ratings and scores for publicly traded companies. "
-        "Input should be a valid stock ticker symbol."
+        "Input should be a valid stock ticker symbol. "
+        "Optionally specify year and month to get data for a specific date, "
+        "otherwise returns the latest available data."
     )
     args_schema: Type[BaseModel] = ESGDataInput
 
@@ -36,14 +46,17 @@ class ESGDataTool(BaseTool):
     def _run(
         self,
         ticker: str,
+        year: Optional[int] = None,
+        month: Optional[int] = None,
         force_refresh: bool = False,
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> Dict[str, Any]:
         """Use the tool."""
         try:
-            # 동기 메서드 사용
             result = self.api_wrapper.get_esg_data_sync(
                 ticker=ticker,
+                year=year,
+                month=month,
                 force_refresh=force_refresh,
             )
             return result
@@ -53,14 +66,17 @@ class ESGDataTool(BaseTool):
     async def _arun(
         self,
         ticker: str,
+        year: Optional[int] = None,
+        month: Optional[int] = None,
         force_refresh: bool = False,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> Dict[str, Any]:
         """Use the tool asynchronously."""
         try:
-            # 비동기 메서드 사용
             result = await self.api_wrapper.get_esg_data_async(
                 ticker=ticker,
+                year=year,
+                month=month,
                 force_refresh=force_refresh,
             )
             return result

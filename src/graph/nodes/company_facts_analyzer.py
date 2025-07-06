@@ -7,6 +7,7 @@ from src.graph.nodes.base import Node
 from src.models.do import RawResponse
 from src.tools.company_facts.tool import CompanyFactsTool
 
+
 class CompanyFactsAnalyzerNode(Node):
     def __init__(self):
         super().__init__()
@@ -34,16 +35,21 @@ class CompanyFactsAnalyzerNode(Node):
                     self.tools,
                     prompt=self.system_prompt,
                 )
-            
+
             result = self.agent.invoke(state)
-            response_content = result['messages'][-1].content
-            
+            response_content = result["messages"][-1].content
+
             self.logger.info(f"CompanyFactsAnalyzer result: \n{response_content}")
-            
+
             # API 키 오류 감지 및 추가 정보 제공
-            if "API Key 설정 오류" in response_content or "API 초기화 실패" in response_content:
+            if (
+                "API Key 설정 오류" in response_content
+                or "API 초기화 실패" in response_content
+            ):
                 self.logger.error("Company Facts API key configuration error detected")
-                enhanced_error = response_content + """
+                enhanced_error = (
+                    response_content
+                    + """
 
 🔧 **배포 환경 확인사항:**
 • GitHub Secrets에 FINANCIAL_DATASETS_API_KEY가 설정되어 있는지 확인
@@ -53,8 +59,9 @@ class CompanyFactsAnalyzerNode(Node):
 
 관리자에게 GitHub Secrets 설정을 요청하세요.
 """
+                )
                 response_content = enhanced_error
-            
+
             return Command(
                 update={
                     "messages": [
@@ -66,7 +73,7 @@ class CompanyFactsAnalyzerNode(Node):
                 },
                 goto="supervisor",
             )
-            
+
         except Exception as e:
             error_message = f"""
 ❌ **CompanyFactsAnalyzer 실행 오류**
@@ -84,7 +91,7 @@ class CompanyFactsAnalyzerNode(Node):
 관리자에게 문의하여 시스템 상태를 확인해주세요.
 """
             self.logger.error(f"CompanyFactsAnalyzer execution error: {e}")
-            
+
             return Command(
                 update={
                     "messages": [
@@ -106,7 +113,7 @@ class CompanyFactsAnalyzerNode(Node):
             )
             result = agent.invoke({"messages": [("human", query)]})
             return RawResponse(answer=result["messages"][-1].content)
-            
+
         except Exception as e:
             error_response = f"""
 ❌ **회사 정보 조회 실패**

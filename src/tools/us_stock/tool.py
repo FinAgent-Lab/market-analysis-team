@@ -15,8 +15,8 @@ class USStockInput(BaseModel):
 
     query: str = Field(
         description="Query containing company name/ticker and optionally a specific date. "
-                    "Examples: 'Apple', 'AAPL as of 2023-12-31', 'Microsoft in Q2 2023', "
-                    "'Tesla financial health in December 2022', 'NVDA 2023년 말 기준'"
+        "Examples: 'Apple', 'AAPL as of 2023-12-31', 'Microsoft in Q2 2023', "
+        "'Tesla financial health in December 2022', 'NVDA 2023년 말 기준'"
     )
 
 
@@ -55,7 +55,9 @@ class USFinancialStatementTool(BaseTool):
             openai_api_key=os.getenv("OPENAI_API_KEY"),
         )
 
-    def _extract_ticker_and_date(self, query: str) -> Tuple[Optional[str], Optional[str]]:
+    def _extract_ticker_and_date(
+        self, query: str
+    ) -> Tuple[Optional[str], Optional[str]]:
         """Extract both ticker symbol and analysis date from query."""
         if self.llm is None:
             print("LLM is not available - creating default LLM")
@@ -99,7 +101,7 @@ class USFinancialStatementTool(BaseTool):
             response = self.llm.invoke([{"role": "user", "content": prompt}])
 
             # response가 다양한 형태일 수 있으므로 안전하게 처리
-            if hasattr(response, 'content'):
+            if hasattr(response, "content"):
                 result = response.content.strip().upper()
             elif isinstance(response, str):
                 result = response.strip().upper()
@@ -111,6 +113,7 @@ class USFinancialStatementTool(BaseTool):
 
                 # Validate ticker format
                 import re
+
                 if re.match(r"^[A-Z]{1,5}$", ticker):
                     # Validate date format if not CURRENT
                     if date == "CURRENT":
@@ -118,7 +121,7 @@ class USFinancialStatementTool(BaseTool):
                     else:
                         try:
                             # Validate date format
-                            datetime.strptime(date, '%Y-%m-%d')
+                            datetime.strptime(date, "%Y-%m-%d")
                             return ticker, date
                         except ValueError:
                             print(f"Invalid date format: {date}")
@@ -135,7 +138,9 @@ class USFinancialStatementTool(BaseTool):
             # 에러 발생 시 간단한 패턴 매칭으로 fallback
             return self._simple_ticker_extraction(query)
 
-    def _simple_ticker_extraction(self, query: str) -> Tuple[Optional[str], Optional[str]]:
+    def _simple_ticker_extraction(
+        self, query: str
+    ) -> Tuple[Optional[str], Optional[str]]:
         """Simple fallback ticker extraction without LLM."""
         import re
 
@@ -143,18 +148,18 @@ class USFinancialStatementTool(BaseTool):
         query_upper = query.upper()
 
         # 티커 패턴 찾기 (1-5자 대문자)
-        ticker_pattern = r'\b([A-Z]{1,5})\b'
+        ticker_pattern = r"\b([A-Z]{1,5})\b"
         matches = re.findall(ticker_pattern, query_upper)
 
         # 회사명 매핑
         company_mapping = {
-            'APPLE': 'AAPL',
-            'MICROSOFT': 'MSFT',
-            'GOOGLE': 'GOOGL',
-            'AMAZON': 'AMZN',
-            'TESLA': 'TSLA',
-            'META': 'META',
-            'NVIDIA': 'NVDA',
+            "APPLE": "AAPL",
+            "MICROSOFT": "MSFT",
+            "GOOGLE": "GOOGL",
+            "AMAZON": "AMZN",
+            "TESLA": "TSLA",
+            "META": "META",
+            "NVIDIA": "NVDA",
         }
 
         # 회사명에서 티커 찾기
@@ -163,19 +168,32 @@ class USFinancialStatementTool(BaseTool):
                 return ticker, None
 
         # 티커 패턴 매치에서 유효한 것 찾기
-        valid_tickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'NFLX', 'AMD', 'INTC']
+        valid_tickers = [
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "TSLA",
+            "META",
+            "NVDA",
+            "NFLX",
+            "AMD",
+            "INTC",
+        ]
         for match in matches:
             if match in valid_tickers:
                 return match, None
 
         return None, None
 
-    def _filter_data_by_date(self, data: Dict, target_date: str, report_type: str = "annualReports") -> Dict:
+    def _filter_data_by_date(
+        self, data: Dict, target_date: str, report_type: str = "annualReports"
+    ) -> Dict:
         """Filter financial data to get the most recent report before or on target date."""
         if "error" in data or report_type not in data:
             return data
 
-        target_dt = datetime.strptime(target_date, '%Y-%m-%d')
+        target_dt = datetime.strptime(target_date, "%Y-%m-%d")
         reports = data[report_type]
 
         # Find the most recent report on or before target date
@@ -183,7 +201,9 @@ class USFinancialStatementTool(BaseTool):
         for report in reports:
             if "fiscalDateEnding" in report:
                 try:
-                    report_date = datetime.strptime(report["fiscalDateEnding"], '%Y-%m-%d')
+                    report_date = datetime.strptime(
+                        report["fiscalDateEnding"], "%Y-%m-%d"
+                    )
                     if report_date <= target_dt:
                         valid_reports.append((report, report_date))
                 except ValueError:
@@ -202,22 +222,32 @@ class USFinancialStatementTool(BaseTool):
             # No data available for that date
             filtered_data = data.copy()
             filtered_data[report_type] = []
-            filtered_data["date_filter_warning"] = f"No financial data available as of {target_date}"
+            filtered_data["date_filter_warning"] = (
+                f"No financial data available as of {target_date}"
+            )
             return filtered_data
 
     def _get_historical_data(self, ticker: str, target_date: str) -> Dict:
         """Get financial data as of a specific date."""
         print(f"Fetching historical data for {ticker} as of {target_date}")
 
-        result = {"ticker": ticker, "analysis_date": target_date, "historical_analysis": True}
+        result = {
+            "ticker": ticker,
+            "analysis_date": target_date,
+            "historical_analysis": True,
+        }
 
         # Get all financial statements
         try:
             balance_sheet = self.api_wrapper.get_balance_sheet(ticker)
             if "error" not in balance_sheet:
-                result["balance_sheet"] = self._filter_data_by_date(balance_sheet, target_date, "annualReports")
+                result["balance_sheet"] = self._filter_data_by_date(
+                    balance_sheet, target_date, "annualReports"
+                )
                 # Also get quarterly data if available
-                quarterly_bs = self._filter_data_by_date(balance_sheet, target_date, "quarterlyReports")
+                quarterly_bs = self._filter_data_by_date(
+                    balance_sheet, target_date, "quarterlyReports"
+                )
                 if quarterly_bs.get("quarterlyReports"):
                     result["balance_sheet_quarterly"] = quarterly_bs
             else:
@@ -228,8 +258,12 @@ class USFinancialStatementTool(BaseTool):
         try:
             income_statement = self.api_wrapper.get_income_statement(ticker)
             if "error" not in income_statement:
-                result["income_statement"] = self._filter_data_by_date(income_statement, target_date, "annualReports")
-                quarterly_is = self._filter_data_by_date(income_statement, target_date, "quarterlyReports")
+                result["income_statement"] = self._filter_data_by_date(
+                    income_statement, target_date, "annualReports"
+                )
+                quarterly_is = self._filter_data_by_date(
+                    income_statement, target_date, "quarterlyReports"
+                )
                 if quarterly_is.get("quarterlyReports"):
                     result["income_statement_quarterly"] = quarterly_is
             else:
@@ -240,8 +274,12 @@ class USFinancialStatementTool(BaseTool):
         try:
             cash_flow = self.api_wrapper.get_cash_flow(ticker)
             if "error" not in cash_flow:
-                result["cash_flow"] = self._filter_data_by_date(cash_flow, target_date, "annualReports")
-                quarterly_cf = self._filter_data_by_date(cash_flow, target_date, "quarterlyReports")
+                result["cash_flow"] = self._filter_data_by_date(
+                    cash_flow, target_date, "annualReports"
+                )
+                quarterly_cf = self._filter_data_by_date(
+                    cash_flow, target_date, "quarterlyReports"
+                )
                 if quarterly_cf.get("quarterlyReports"):
                     result["cash_flow_quarterly"] = quarterly_cf
             else:
@@ -262,14 +300,15 @@ class USFinancialStatementTool(BaseTool):
 
         # Analyze the historical data
         from . import analyze_financial_data
+
         result["analysis"] = analyze_financial_data(self.api_wrapper, result)
 
         return result
 
     def _run(
-            self,
-            query: str,
-            run_manager: Optional[CallbackManagerForToolRun] = None,
+        self,
+        query: str,
+        run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> Union[Dict, str]:
         """Run the tool with date extraction support."""
         try:
@@ -283,7 +322,9 @@ class USFinancialStatementTool(BaseTool):
 
             if analysis_date:
                 # Historical analysis
-                print(f"Performing historical analysis for {ticker} as of {analysis_date}")
+                print(
+                    f"Performing historical analysis for {ticker} as of {analysis_date}"
+                )
                 result = self._get_historical_data(ticker, analysis_date)
 
                 # Format with historical context
@@ -298,6 +339,7 @@ class USFinancialStatementTool(BaseTool):
 
         except Exception as e:
             import traceback
+
             print(f"Error in financial analysis: {repr(e)}")
             print(traceback.format_exc())
             return f"Error analyzing financial statements: {repr(e)}"

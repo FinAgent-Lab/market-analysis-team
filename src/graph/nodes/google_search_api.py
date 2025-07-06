@@ -5,10 +5,10 @@ from langchain_core.messages import HumanMessage
 
 from src.graph.nodes.base import Node
 from src.models.do import RawResponse
-from src.tools.google_searcher.tool import GoogleSearch
+from src.tools.google_search_api.tool import GoogleSearchAPI
 
 
-class GoogleSearcherNode(Node):
+class GoogleSearchAPINode(Node):
     def __init__(self):
         super().__init__()
 
@@ -43,7 +43,7 @@ class GoogleSearcherNode(Node):
             "Do nothing else."
         )
         self.agent = None
-        self.tools = [GoogleSearch()]
+        self.tools = [GoogleSearchAPI()]
 
     def _run(self, state: dict) -> dict:
         if self.agent is None:

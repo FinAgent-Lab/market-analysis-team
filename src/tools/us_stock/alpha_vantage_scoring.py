@@ -11,10 +11,12 @@ class FinancialScoringSystem:
             return None
 
         # % 기호, 쉼표, 기타 문자 제거하고 숫자만 추출
-        cleaned_text = str(text).replace('%', '').replace(',', '').replace('$', '').strip()
+        cleaned_text = (
+            str(text).replace("%", "").replace(",", "").replace("$", "").strip()
+        )
 
         # 음수와 소수점을 포함한 숫자 패턴 매칭
-        match = re.search(r'(-?\d+\.?\d*)', cleaned_text)
+        match = re.search(r"(-?\d+\.?\d*)", cleaned_text)
 
         if match:
             try:
@@ -27,11 +29,11 @@ class FinancialScoringSystem:
         """전체 재무 점수 계산"""
         try:
             # 기존 분석에서 메트릭 추출
-            roe = self.extract_number(analysis.get('roe', ''))
-            roa = self.extract_number(analysis.get('roa', ''))
-            operating_margin = self.extract_number(analysis.get('operating_margin', ''))
-            current_ratio = self.extract_number(analysis.get('current_ratio', ''))
-            debt_to_equity = self.extract_number(analysis.get('debt_to_equity', ''))
+            roe = self.extract_number(analysis.get("roe", ""))
+            roa = self.extract_number(analysis.get("roa", ""))
+            operating_margin = self.extract_number(analysis.get("operating_margin", ""))
+            current_ratio = self.extract_number(analysis.get("current_ratio", ""))
+            debt_to_equity = self.extract_number(analysis.get("debt_to_equity", ""))
 
             # 개별 지표 점수 계산 (각각 0-100점)
             roe_score = self._score_roe(roe)
@@ -47,60 +49,52 @@ class FinancialScoringSystem:
             )
 
             # 안정성: Current Ratio(60%) + Debt-to-Equity(40%)
-            stability_score = round(
-                (liquidity_score * 0.6 + leverage_score * 0.4)
-            )
+            stability_score = round((liquidity_score * 0.6 + leverage_score * 0.4))
 
             # 전체 종합 점수: 수익성(60%) + 안정성(40%)
-            overall_score = round(
-                (profitability_score * 0.6 + stability_score * 0.4)
-            )
+            overall_score = round((profitability_score * 0.6 + stability_score * 0.4))
 
             return {
                 # 종합 점수
-                'overall_score': overall_score,
-                'overall_grade': self._get_grade(overall_score),
-
+                "overall_score": overall_score,
+                "overall_grade": self._get_grade(overall_score),
                 # 영역별 점수
-                'profitability_score': profitability_score,
-                'profitability_grade': self._get_grade(profitability_score),
-                'stability_score': stability_score,
-                'stability_grade': self._get_grade(stability_score),
-
+                "profitability_score": profitability_score,
+                "profitability_grade": self._get_grade(profitability_score),
+                "stability_score": stability_score,
+                "stability_grade": self._get_grade(stability_score),
                 # 개별 지표 점수
-                'individual_scores': {
-                    'roe_score': roe_score,
-                    'roa_score': roa_score,
-                    'operating_margin_score': margin_score,
-                    'current_ratio_score': liquidity_score,
-                    'debt_to_equity_score': leverage_score
+                "individual_scores": {
+                    "roe_score": roe_score,
+                    "roa_score": roa_score,
+                    "operating_margin_score": margin_score,
+                    "current_ratio_score": liquidity_score,
+                    "debt_to_equity_score": leverage_score,
                 },
-
                 # 실제 메트릭 값들 (참고용)
-                'metric_values': {
-                    'roe': roe,
-                    'roa': roa,
-                    'operating_margin': operating_margin,
-                    'current_ratio': current_ratio,
-                    'debt_to_equity': debt_to_equity
+                "metric_values": {
+                    "roe": roe,
+                    "roa": roa,
+                    "operating_margin": operating_margin,
+                    "current_ratio": current_ratio,
+                    "debt_to_equity": debt_to_equity,
                 },
-
                 # 점수 해석
-                'score_interpretation': self._get_score_interpretation(overall_score)
+                "score_interpretation": self._get_score_interpretation(overall_score),
             }
 
         except Exception as e:
             # 점수 계산 실패 시 기본값 반환
             return {
-                'overall_score': 0,
-                'overall_grade': 'N/A',
-                'profitability_score': 0,
-                'profitability_grade': 'N/A',
-                'stability_score': 0,
-                'stability_grade': 'N/A',
-                'error': f"점수 계산 오류: {str(e)}",
-                'individual_scores': {},
-                'metric_values': {}
+                "overall_score": 0,
+                "overall_grade": "N/A",
+                "profitability_score": 0,
+                "profitability_grade": "N/A",
+                "stability_score": 0,
+                "stability_grade": "N/A",
+                "error": f"점수 계산 오류: {str(e)}",
+                "individual_scores": {},
+                "metric_values": {},
             }
 
     def _score_roe(self, roe: Optional[float]) -> int:
@@ -239,17 +233,17 @@ class FinancialScoringSystem:
 
     def format_score_summary(self, scores: Dict) -> str:
         """점수 요약 포맷팅"""
-        if 'error' in scores:
+        if "error" in scores:
             return f"점수 계산 불가: {scores['error']}"
 
         summary = f"""
 📊 **재무 건전성 종합 점수**
 
-💯 **전체 평가**: {scores['overall_score']}/100점 ({scores['overall_grade']})
-- 🔥 수익성: {scores['profitability_score']}/100점 ({scores['profitability_grade']})
-- 🛡️ 안정성: {scores['stability_score']}/100점 ({scores['stability_grade']})
+💯 **전체 평가**: {scores["overall_score"]}/100점 ({scores["overall_grade"]})
+- 🔥 수익성: {scores["profitability_score"]}/100점 ({scores["profitability_grade"]})
+- 🛡️ 안정성: {scores["stability_score"]}/100점 ({scores["stability_grade"]})
 
-**투자 관점**: {scores['score_interpretation']}
+**투자 관점**: {scores["score_interpretation"]}
 """
         return summary
 
@@ -260,17 +254,19 @@ def add_scoring_to_analysis(analysis: Dict) -> Dict:
     try:
         scoring_system = FinancialScoringSystem()
         financial_scores = scoring_system.calculate_financial_scores(analysis)
-        analysis['financial_scores'] = financial_scores
+        analysis["financial_scores"] = financial_scores
 
         # 점수 요약도 추가
-        analysis['score_summary'] = scoring_system.format_score_summary(financial_scores)
+        analysis["score_summary"] = scoring_system.format_score_summary(
+            financial_scores
+        )
 
     except Exception as e:
-        analysis['financial_scores'] = {
-            'overall_score': 0,
-            'overall_grade': 'N/A',
-            'error': f"점수 계산 실패: {str(e)}"
+        analysis["financial_scores"] = {
+            "overall_score": 0,
+            "overall_grade": "N/A",
+            "error": f"점수 계산 실패: {str(e)}",
         }
-        analysis['score_summary'] = "점수 계산을 완료할 수 없습니다."
+        analysis["score_summary"] = "점수 계산을 완료할 수 없습니다."
 
     return analysis

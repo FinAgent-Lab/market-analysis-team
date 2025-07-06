@@ -9,7 +9,7 @@ from langchain_core.callbacks import (
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from src.tools.google_searcher.google_search import GoogleSearchAPIWrapper
+from src.tools.google_search_api.google_search_api import GoogleSearchAPIWrapper
 
 
 class GoogleInput(BaseModel):
@@ -18,7 +18,7 @@ class GoogleInput(BaseModel):
     query: str = Field(description="search query to look up")
 
 
-class GoogleSearchResults(BaseTool):
+class GoogleSearchAPIResults(BaseTool):
     """Tool that queries the Google Custom Search API and gets back json.
 
     Setup:
@@ -33,7 +33,7 @@ class GoogleSearchResults(BaseTool):
 
         .. code-block:: python
 
-            tool = GoogleSearchResults()
+            tool = GoogleSearchAPIResults()
 
     Invoke:
 
@@ -42,9 +42,9 @@ class GoogleSearchResults(BaseTool):
             tool.invoke({'query': '미국 증시 정보'})  # info search for US stock market
     """
 
-    name: str = "google_search_results_json"
+    name: str = "google_search_api_results_json"
     description: str = (
-        "A search engine for US stock market using google search API. "
+        "A search engine for US stock market using Google Search API. "
         "Useful for when you need to answer questions about US stock prices, news, info, estimation, etc. "
         "Input should be a search query in Korean or English."
     )
@@ -75,12 +75,12 @@ class GoogleSearchResults(BaseTool):
             return repr(e)
 
 
-class GoogleSearch(GoogleSearchResults):
+class GoogleSearchAPI(GoogleSearchAPIResults):
     """Tool specialized for Google search."""
 
-    name: str = "google_search"
+    name: str = "google_search_api"
     description: str = (
-        "A search engine for US stock market using google search API. "
+        "A search engine for US stock market using Google Search API. "
         "Useful for when you need to answer questions about US stock prices, news, info, estimation, etc. "
         "Input should be a search query in Korean or English."
     )

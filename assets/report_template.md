@@ -125,14 +125,18 @@
 - 향후 가이던스 요약
 
 ## ESG 정보 분석
-- total_esg_score
-  - risk_level
-- environment_score
-  - score
-- social_score
-  - score
-- governance_score
-  - score
+
+### 📊 ESG 종합 점수
+| 항목 | 점수 | 업계 평균 | 업계 대비 | 위험 수준 |
+|------|------|----------|----------|----------|
+| **종합 ESG 점수** | {total_esg_score.score} | {total_esg_score.industry_average} | {total_esg_score.vs_industry} | {total_esg_score.risk_level} |
+
+### 🌿 ESG 세부 점수
+| 구분 | 점수 | 업계 평균 | 업계 대비 평가 |
+|------|------|----------|---------------|
+| **환경 (Environment)** | {environment_score.score} | {environment_score.industry_average} | {environment_score.vs_industry} |
+| **사회 (Social)** | {social_score.score} | {social_score.industry_average} | {social_score.vs_industry} |
+| **지배구조 (Governance)** | {governance_score.score} | {governance_score.industry_average} | {governance_score.vs_industry} |
 
 ## 기업 이벤트 
 - 이사회 변경, 주요 임원 선임/퇴임 등
