@@ -17,7 +17,8 @@ from src.graph.nodes import (
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
     USFinancialAnalyzerNode,
-    GoogleSearcherNode,
+    GoogleSearchAPINode,
+    GoogleCrawlerNode,
     CompanyFactsAnalyzerNode,
 )
 from src.utils.logger import setup_logger
@@ -82,7 +83,8 @@ def main(
     """
 
     graph_builder.add_node(NaverNewsSearcherNode())
-    graph_builder.add_node(GoogleSearcherNode())
+    graph_builder.add_node(GoogleSearchAPINode())  # API 기반
+    graph_builder.add_node(GoogleCrawlerNode())    # 크롤링 기반 (새로 추가)
     graph_builder.add_node(RetrieveESGNode())
     graph_builder.add_node(ReportAssistantNode())
     # graph_builder.add_node(WeeklyReporterNode())
