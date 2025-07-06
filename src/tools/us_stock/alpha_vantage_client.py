@@ -10,7 +10,9 @@ from pydantic import BaseModel, ConfigDict, SecretStr, model_validator
 
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -41,10 +43,10 @@ class AlphaVantageAPIWrapper(BaseModel):
         Return None when conversion is not possible.
         """
         if (
-                value is None
-                or value == "None"
-                or value == ""
-                or (isinstance(value, str) and value.strip().lower() == "none")
+            value is None
+            or value == "None"
+            or value == ""
+            or (isinstance(value, str) and value.strip().lower() == "none")
         ):
             return None
         try:
@@ -53,7 +55,7 @@ class AlphaVantageAPIWrapper(BaseModel):
             return None
 
     def format_financial_value(
-            self, value: Any, include_dollar: bool = True, include_percent: bool = False
+        self, value: Any, include_dollar: bool = True, include_percent: bool = False
     ) -> str:
         """
         Format financial values.
@@ -84,9 +86,9 @@ class AlphaVantageAPIWrapper(BaseModel):
 
         # Return from cache if available and not expired
         if (
-                cache_key in self.cache
-                and current_time - self.cache_timestamp.get(cache_key, 0)
-                < self.base_cache_time
+            cache_key in self.cache
+            and current_time - self.cache_timestamp.get(cache_key, 0)
+            < self.base_cache_time
         ):
             return self.cache[cache_key]
 
@@ -207,7 +209,7 @@ class AlphaVantageAPIWrapper(BaseModel):
             "DividendYield",
             "EPS",
             "ProfitMargin",
-            "GrossProfitTTM"
+            "GrossProfitTTM",
         ]
 
         logger.info("====== RAW FINANCIAL METRICS ======")
@@ -215,13 +217,23 @@ class AlphaVantageAPIWrapper(BaseModel):
             if metric in profile:
                 raw_value = profile[metric]
                 float_value = self.safe_float_or_empty(raw_value)
-                logger.info(f"{metric}: Raw Value = {raw_value}, Float Value = {float_value}")
+                logger.info(
+                    f"{metric}: Raw Value = {raw_value}, Float Value = {float_value}"
+                )
 
                 # For percentage metrics, show what happens if we multiply by 100
-                if metric in ["ReturnOnEquityTTM", "ReturnOnAssetsTTM", "OperatingMarginTTM", "ProfitMargin", "DividendYield"]:
+                if metric in [
+                    "ReturnOnEquityTTM",
+                    "ReturnOnAssetsTTM",
+                    "OperatingMarginTTM",
+                    "ProfitMargin",
+                    "DividendYield",
+                ]:
                     if float_value is not None:
                         percentage_value = float_value * 100
-                        logger.info(f"{metric} as percentage (x100): {percentage_value:.2f}%")
+                        logger.info(
+                            f"{metric} as percentage (x100): {percentage_value:.2f}%"
+                        )
 
         # Log all keys in profile for discovery
         logger.info("====== ALL AVAILABLE PROFILE KEYS ======")

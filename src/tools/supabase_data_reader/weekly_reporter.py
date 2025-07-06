@@ -1,6 +1,7 @@
 """
 실시간 주간 보고서 생성
 """
+
 import json
 from datetime import datetime
 from typing import Optional
@@ -10,14 +11,15 @@ from langchain_core.language_models.base import BaseLanguageModel
 
 from .base_reporter import BaseWeeklyReporter
 
+
 class WeeklyReportGenerator(BaseWeeklyReporter):
     """실시간 주간 보고서 생성 클래스"""
-    
+
     def __init__(self, llm: Optional[BaseLanguageModel] = None):
         # llm이 제공되지 않으면 기본 모델 사용
         llm = llm or ChatOpenAI(model="gpt-4o-mini", temperature=0.1)
         super().__init__(llm)
-    
+
     def _generate_report(self, **kwargs) -> str:
         """실시간 보고서 생성"""
         prompt = ChatPromptTemplate.from_template("""
@@ -42,20 +44,30 @@ class WeeklyReportGenerator(BaseWeeklyReporter):
         
         마크다운 형식으로 작성하고, 투자자에게 실용적인 인사이트를 제공해주세요.
         """)
-        
+
         chain = prompt | self.llm
-        
-        result = chain.invoke({
-            "ticker": kwargs["ticker"],
-            "period": kwargs["period"],
-            "price_analysis": json.dumps(kwargs["price_analysis"], ensure_ascii=False),
-            "news_analysis": json.dumps(kwargs["news_analysis"], ensure_ascii=False),
-            "insider_analysis": json.dumps(kwargs["insider_analysis"], ensure_ascii=False),
-            "company_facts": json.dumps(kwargs["company_facts"], ensure_ascii=False)
-        })
-        
+
+        result = chain.invoke(
+            {
+                "ticker": kwargs["ticker"],
+                "period": kwargs["period"],
+                "price_analysis": json.dumps(
+                    kwargs["price_analysis"], ensure_ascii=False
+                ),
+                "news_analysis": json.dumps(
+                    kwargs["news_analysis"], ensure_ascii=False
+                ),
+                "insider_analysis": json.dumps(
+                    kwargs["insider_analysis"], ensure_ascii=False
+                ),
+                "company_facts": json.dumps(
+                    kwargs["company_facts"], ensure_ascii=False
+                ),
+            }
+        )
+
         return result.content
-    
+
     def _save_report(self, ticker: str, report_date: str, content: str) -> bool:
         """실시간 보고서 저장"""
         try:
@@ -65,10 +77,14 @@ class WeeklyReportGenerator(BaseWeeklyReporter):
                 "report_date": report_date,
                 "report_type": "weekly",
                 "content": content,
-                "created_at": datetime.now().isoformat()
+                "created_at": datetime.now().isoformat(),
             }
-            
-            response = self.data_reader.client.table("stock_reports").upsert(record, on_conflict="id").execute()
+
+            response = (
+                self.data_reader.client.table("stock_reports")
+                .upsert(record, on_conflict="id")
+                .execute()
+            )
             return bool(response.data)
         except Exception as e:
             print(f"보고서 저장 오류: {e}")

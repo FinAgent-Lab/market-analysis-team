@@ -9,7 +9,6 @@ Provides comprehensive ESG data analysis including:
 import asyncio
 import json
 import urllib.request
-from datetime import datetime
 from typing import Dict, Any, Optional, Tuple
 
 import pandas as pd
@@ -96,7 +95,7 @@ class ESGSearchWrapper(BaseModel):
 
             return combined_df, peer_group
 
-        except Exception as e:
+        except Exception:
             return None, None
 
     def get_esg_data_by_date(

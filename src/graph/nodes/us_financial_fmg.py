@@ -98,7 +98,9 @@ class StockInfoNode(Node):
     def fallback_node(self, state):
         return {
             "messages": [
-                HumanMessage(content="죄송합니다. 요청을 이해하지 못했습니다. 예: '손익계산서', '재무 비율' 등의 키워드를 사용해 주세요.")
+                HumanMessage(
+                    content="죄송합니다. 요청을 이해하지 못했습니다. 예: '손익계산서', '재무 비율' 등의 키워드를 사용해 주세요."
+                )
             ]
         }
 
@@ -146,18 +148,102 @@ class StockInfoNode(Node):
 
         graph.add_node("classify", self.classify_message)
 
-        graph.add_node("get_income_statement", lambda s: {"symbol": s["symbol"], "result": get_income_statement(s["symbol"]), "target_year": s.get("target_year")})
-        graph.add_node("get_balance_sheet", lambda s: {"symbol": s["symbol"], "result": get_balance_sheet(s["symbol"]), "target_year": s.get("target_year")})
-        graph.add_node("get_cash_flow_statement", lambda s: {"symbol": s["symbol"], "result": get_cash_flow_statement(s["symbol"]), "target_year": s.get("target_year")})
-        graph.add_node("get_financials", lambda s: {"symbol": s["symbol"], "result": get_financials(s["symbol"]), "target_year": s.get("target_year")})
-        graph.add_node("get_key_metrics", lambda s: {"symbol": s["symbol"], "result": get_key_metrics(s["symbol"]), "target_year": s.get("target_year")})
-        graph.add_node("get_financial_ratios", lambda s: {"symbol": s["symbol"], "result": get_financial_ratios(s["symbol"]), "target_year": s.get("target_year")})
-        graph.add_node("get_financial_scores", lambda s: {"symbol": s["symbol"], "result": get_financial_scores(s["symbol"]), "target_year": s.get("target_year")})
-        graph.add_node("get_enterprise_value", lambda s: {"symbol": s["symbol"], "result": get_enterprise_value(s["symbol"]), "target_year": s.get("target_year")})
-        graph.add_node("get_income_statement_growth", lambda s: {"symbol": s["symbol"], "result": get_income_statement_growth(s["symbol"]), "target_year": s.get("target_year")})
-        graph.add_node("get_balance_sheet_growth", lambda s: {"symbol": s["symbol"], "result": get_balance_sheet_growth(s["symbol"]), "target_year": s.get("target_year")})
-        graph.add_node("get_cash_flow_statement_growth", lambda s: {"symbol": s["symbol"], "result": get_cash_flow_statement_growth(s["symbol"]), "target_year": s.get("target_year")})
-        graph.add_node("get_financials_growth", lambda s: {"symbol": s["symbol"], "result": get_financials_growth(s["symbol"]), "target_year": s.get("target_year")})
+        graph.add_node(
+            "get_income_statement",
+            lambda s: {
+                "symbol": s["symbol"],
+                "result": get_income_statement(s["symbol"]),
+                "target_year": s.get("target_year"),
+            },
+        )
+        graph.add_node(
+            "get_balance_sheet",
+            lambda s: {
+                "symbol": s["symbol"],
+                "result": get_balance_sheet(s["symbol"]),
+                "target_year": s.get("target_year"),
+            },
+        )
+        graph.add_node(
+            "get_cash_flow_statement",
+            lambda s: {
+                "symbol": s["symbol"],
+                "result": get_cash_flow_statement(s["symbol"]),
+                "target_year": s.get("target_year"),
+            },
+        )
+        graph.add_node(
+            "get_financials",
+            lambda s: {
+                "symbol": s["symbol"],
+                "result": get_financials(s["symbol"]),
+                "target_year": s.get("target_year"),
+            },
+        )
+        graph.add_node(
+            "get_key_metrics",
+            lambda s: {
+                "symbol": s["symbol"],
+                "result": get_key_metrics(s["symbol"]),
+                "target_year": s.get("target_year"),
+            },
+        )
+        graph.add_node(
+            "get_financial_ratios",
+            lambda s: {
+                "symbol": s["symbol"],
+                "result": get_financial_ratios(s["symbol"]),
+                "target_year": s.get("target_year"),
+            },
+        )
+        graph.add_node(
+            "get_financial_scores",
+            lambda s: {
+                "symbol": s["symbol"],
+                "result": get_financial_scores(s["symbol"]),
+                "target_year": s.get("target_year"),
+            },
+        )
+        graph.add_node(
+            "get_enterprise_value",
+            lambda s: {
+                "symbol": s["symbol"],
+                "result": get_enterprise_value(s["symbol"]),
+                "target_year": s.get("target_year"),
+            },
+        )
+        graph.add_node(
+            "get_income_statement_growth",
+            lambda s: {
+                "symbol": s["symbol"],
+                "result": get_income_statement_growth(s["symbol"]),
+                "target_year": s.get("target_year"),
+            },
+        )
+        graph.add_node(
+            "get_balance_sheet_growth",
+            lambda s: {
+                "symbol": s["symbol"],
+                "result": get_balance_sheet_growth(s["symbol"]),
+                "target_year": s.get("target_year"),
+            },
+        )
+        graph.add_node(
+            "get_cash_flow_statement_growth",
+            lambda s: {
+                "symbol": s["symbol"],
+                "result": get_cash_flow_statement_growth(s["symbol"]),
+                "target_year": s.get("target_year"),
+            },
+        )
+        graph.add_node(
+            "get_financials_growth",
+            lambda s: {
+                "symbol": s["symbol"],
+                "result": get_financials_growth(s["symbol"]),
+                "target_year": s.get("target_year"),
+            },
+        )
         graph.add_node("comprehensive_analysis", self.run_comprehensive_analysis)
         graph.add_node("fallback_node", self.fallback_node)
         graph.add_node("summarize_report", self.summarize_report)
@@ -186,12 +272,19 @@ class StockInfoNode(Node):
         )
 
         for api_node in [
-            "get_income_statement", "get_balance_sheet", "get_cash_flow_statement",
-            "get_financials", "get_key_metrics", "get_financial_ratios",
-            "get_financial_scores", "get_enterprise_value",
-            "get_income_statement_growth", "get_balance_sheet_growth",
-            "get_cash_flow_statement_growth", "get_financials_growth",
-            "comprehensive_analysis"
+            "get_income_statement",
+            "get_balance_sheet",
+            "get_cash_flow_statement",
+            "get_financials",
+            "get_key_metrics",
+            "get_financial_ratios",
+            "get_financial_scores",
+            "get_enterprise_value",
+            "get_income_statement_growth",
+            "get_balance_sheet_growth",
+            "get_cash_flow_statement_growth",
+            "get_financials_growth",
+            "comprehensive_analysis",
         ]:
             graph.add_edge(api_node, "summarize_report")
 

@@ -57,13 +57,12 @@ class ReportAgentNode(Node):
             update={
                 "messages": [
                     HumanMessage(
-                        content=result["messages"][-1].content,
-                        name="reportagent"
+                        content=result["messages"][-1].content, name="reportagent"
                     )
                 ],
                 "report_markdown": result["messages"][-1].content,
             },
-            goto="supervisor"
+            goto="supervisor",
         )
 
     def _invoke(self, query: str):
@@ -71,7 +70,7 @@ class ReportAgentNode(Node):
             self.agent = create_react_agent(
                 ChatOpenAI(model=self.DEFAULT_LLM_MODEL),
                 self.tools,
-                prompt=self.system_prompt
+                prompt=self.system_prompt,
             )
         # config = self._get_callback_config()
         # result = self.agent.invoke({"messages": [("human", query)]}, config=config)

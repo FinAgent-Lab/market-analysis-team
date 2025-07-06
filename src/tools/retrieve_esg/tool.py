@@ -16,10 +16,12 @@ class ESGDataInput(BaseModel):
 
     ticker: str = Field(description="The stock ticker symbol to get ESG data for.")
     year: Optional[int] = Field(
-        description="Target year for ESG data (optional, uses latest if not specified).", default=None
+        description="Target year for ESG data (optional, uses latest if not specified).",
+        default=None,
     )
     month: Optional[int] = Field(
-        description="Target month for ESG data (optional, uses latest if not specified).", default=None
+        description="Target month for ESG data (optional, uses latest if not specified).",
+        default=None,
     )
     force_refresh: bool = Field(
         description="Whether to force refresh data from yfinance.", default=False
