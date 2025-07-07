@@ -13,6 +13,7 @@ from src.graph.nodes.us_financial import USFinancialAnalyzerNode
 from src.graph.nodes.weekly_reporter import WeeklyReporterNode
 from src.graph.nodes.retrieve_esg import RetrieveESGNode
 from src.graph.nodes.company_facts_analyzer import CompanyFactsAnalyzerNode
+from src.graph.nodes.us_financial_fmg import StockInfoNode
 
 __all__ = [
     "Node",

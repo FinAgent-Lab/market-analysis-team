@@ -21,8 +21,8 @@ class Pipeline:
         pass
 
     def __init__(self):
-        self.name = "Market Analysis - Naver News Searcher"
-        self.agent_name = "navernewssearcher"
+        self.name = "Market Analysis - Stock Information"
+        self.agent_name = "stockinfo"
         self.endpoint = f"http://{APISERVER_HOST}/api/{self.agent_name}"
         pass
 
