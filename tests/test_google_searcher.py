@@ -9,26 +9,26 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 
-class TestGoogleCrawlerWrapper:
-    """GoogleCrawlerWrapper 테스트"""
+class TestGoogleSearcherWrapper:
+    """GoogleSearcherWrapper 테스트"""
     
     @pytest.fixture(autouse=True)
     def setup_method(self):
         """각 테스트 메서드 실행 전 실행"""
-        from src.tools.google_crawler.google_crawler import GoogleCrawlerWrapper
-        self.crawler = GoogleCrawlerWrapper()
+        from src.tools.google_searcher.google_searcher import GoogleSearcherWrapper
+        self.searcher = GoogleSearcherWrapper()
     
-    def test_crawler_initialization(self):
-        """크롤러 초기화 테스트"""
-        assert self.crawler is not None
-        assert self.crawler.headers is not None
-        assert "User-Agent" in self.crawler.headers
-        print("✅ 크롤러 초기화 성공")
+    def test_searcher_initialization(self):
+        """검색기 초기화 테스트"""
+        assert self.searcher is not None
+        assert self.searcher.headers is not None
+        assert "User-Agent" in self.searcher.headers
+        print("✅ 검색기 초기화 성공")
     
     def test_explicit_date_search(self):
         """명시적 날짜 검색 테스트"""
         query = "Apple stock AAPL"
-        result = self.crawler.search_with_explicit_dates(
+        result = self.searcher.search_with_explicit_dates(
             query, 
             start_date="06/01/2024", 
             end_date="06/30/2024",
@@ -41,12 +41,12 @@ class TestGoogleCrawlerWrapper:
         # 결과 검증
         assert isinstance(result, str)
         assert len(result) > 0
-        assert query in result or "Google News 크롤링 결과" in result
+        assert query in result or "Google News 검색 결과" in result
         print("✅ 명시적 날짜 검색 테스트 성공")
     
     def test_default_date_behavior(self):
         """기본 날짜 동작 테스트 (날짜 미지정시)"""
-        result = self.crawler.search_with_explicit_dates(
+        result = self.searcher.search_with_explicit_dates(
             "Microsoft MSFT",
             max_results=2
         )
@@ -56,14 +56,14 @@ class TestGoogleCrawlerWrapper:
         print("✅ 기본 날짜 동작 테스트 성공")
 
 
-class TestGoogleCrawlerTool:
-    """GoogleCrawler Tool 테스트"""
+class TestGoogleSearcherTool:
+    """GoogleSearcher Tool 테스트"""
     
     @pytest.fixture(autouse=True)
     def setup_method(self):
         """각 테스트 메서드 실행 전 실행"""
-        from src.tools.google_crawler.tool import GoogleCrawler
-        self.tool = GoogleCrawler()
+        from src.tools.google_searcher.tool import GoogleSearcher
+        self.tool = GoogleSearcher()
     
     def test_tool_initialization(self):
         """툴 초기화 테스트"""
@@ -97,17 +97,17 @@ class TestGoogleCrawlerTool:
         print("✅ 날짜 없는 툴 실행 테스트 성공")
 
 
-class TestGoogleCrawlerAgent:
-    """GoogleCrawler 에이전트 테스트"""
+class TestGoogleSearcherAgent:
+    """GoogleSearcher 에이전트 테스트"""
     
     @pytest.fixture(autouse=True)
     def setup_method(self):
         """각 테스트 메서드 실행 전 실행"""
         try:
-            from src.graph.nodes.google_crawler import GoogleCrawlerNode
+            from src.graph.nodes.google_searcher import GoogleSearcherNode
             from langchain_openai import ChatOpenAI
             
-            self.node = GoogleCrawlerNode()
+            self.node = GoogleSearcherNode()
             self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
         except ImportError as e:
             pytest.skip(f"에이전트 의존성 누락: {e}")
@@ -156,10 +156,10 @@ def test_manual_agent_integration():
     print("="*60)
     
     try:
-        from src.graph.nodes.google_crawler import GoogleCrawlerNode
+        from src.graph.nodes.google_searcher import GoogleSearcherNode
         from langchain_openai import ChatOpenAI
         
-        node = GoogleCrawlerNode()
+        node = GoogleSearcherNode()
         llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
         
         test_queries = [
@@ -222,7 +222,7 @@ def test_manual_agent_integration():
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("🧪 Google Crawler 종합 테스트")
+    print("🧪 Google Searcher 종합 테스트")
     print("=" * 60)
     
     # pytest 실행 (integration 테스트 제외)

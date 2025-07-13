@@ -17,8 +17,8 @@ from src.graph.nodes import (
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
     USFinancialAnalyzerNode,
-    GoogleSearchAPINode,
-    GoogleCrawlerNode,
+    # GoogleSearchAPINode,  # 삭제됨 - google_searcher로 대체
+    GoogleSearcherNode,
     CompanyFactsAnalyzerNode,
     StockInfoNode,
 )
@@ -84,9 +84,8 @@ def main(
     """
 
     graph_builder.add_node(NaverNewsSearcherNode())
-    # graph_builder.add_node(GoogleSearcherNode())
-    graph_builder.add_node(GoogleSearchAPINode())  # API 기반
-    graph_builder.add_node(GoogleCrawlerNode())    # 크롤링 기반 (새로 추가)
+    graph_builder.add_node(GoogleSearcherNode())    # 검색 기반 (웹 스크래핑)
+    # graph_builder.add_node(GoogleSearchAPINode())  # 삭제됨 - API 기반, google_searcher로 대체
     graph_builder.add_node(RetrieveESGNode())
     graph_builder.add_node(ReportAssistantNode())
     # graph_builder.add_node(WeeklyReporterNode())
@@ -100,7 +99,7 @@ def main(
     # graph_builder.add_node(HantooFinancialAnalyzerNode())
 
     # 미국 주식 분석 에이전트 노드 추가 (Alpha Vantage API 사용)
-    # graph_builder.add_node(USFinancialAnalyzerNode())
+    graph_builder.add_node(USFinancialAnalyzerNode())
 
     # # 주간 리포트 스크래핑 스케쥴러
     # if os.getenv("PRODUCTION", "false").lower() == "true":

@@ -6,14 +6,14 @@ from langchain_core.messages import HumanMessage
 
 from src.graph.nodes.base import Node
 from src.models.do import RawResponse
-from src.tools.google_crawler.tool import GoogleCrawler
+from src.tools.google_searcher.tool import GoogleSearcher
 
 
-class GoogleCrawlerNode(Node):
+class GoogleSearcherNode(Node):
     def __init__(self):
         super().__init__()
         self.agent = None
-        self.tools = [GoogleCrawler()]
+        self.tools = [GoogleSearcher()]
 
     def _get_current_date_info(self) -> dict:
         """현재 날짜 정보를 동적으로 생성"""
@@ -33,8 +33,8 @@ class GoogleCrawlerNode(Node):
         """동적으로 시스템 프롬프트 생성"""
         date_info = self._get_current_date_info()
         
-        return f"""You are a news research specialist using Google News crawler specialized in US stock market research.
-Your job is to extract search queries and date ranges from user requests, then use the GoogleCrawler tool to find relevant news articles about US stocks and companies.
+        return f"""You are a news research specialist using Google News searcher specialized in US stock market research.
+Your job is to extract search queries and date ranges from user requests, then use the GoogleSearcher tool to find relevant news articles about US stocks and companies.
 
 **CURRENT DATE INFORMATION:**
 - Today's date: {date_info['today_str']}
@@ -92,7 +92,7 @@ Your job is to extract search queries and date ranges from user requests, then u
    - Keep main focus on US stock market context
 
 **TOOL USAGE:**
-Use the GoogleCrawler tool with these parameters:
+Use the GoogleSearcher tool with these parameters:
 - query: the translated and optimized English search term for US stocks
 - start_date: calculated start date in MM/DD/YYYY format
 - end_date: calculated end date in MM/DD/YYYY format (always use {date_info['today_str']} for current date)
@@ -102,32 +102,32 @@ Use the GoogleCrawler tool with these parameters:
 User: '애플 최근 일주일'
 → Translated query: 'Apple stock AAPL'
 → Date range: 7 days ago to today
-→ Call: GoogleCrawler(query='Apple stock AAPL', start_date='{date_info['seven_days_ago']}', end_date='{date_info['today_str']}')
+→ Call: GoogleSearcher(query='Apple stock AAPL', start_date='{date_info['seven_days_ago']}', end_date='{date_info['today_str']}')
 
 User: '테슬라 오늘'
 → Translated query: 'Tesla TSLA stock'
 → Date range: Yesterday to today
-→ Call: GoogleCrawler(query='Tesla TSLA stock', start_date='{date_info['yesterday_str']}', end_date='{date_info['today_str']}')
+→ Call: GoogleSearcher(query='Tesla TSLA stock', start_date='{date_info['yesterday_str']}', end_date='{date_info['today_str']}')
 
 User: '구글 어제'
 → Translated query: 'Google Alphabet GOOGL stock'
 → Date range: Yesterday only
-→ Call: GoogleCrawler(query='Google Alphabet GOOGL stock', start_date='{date_info['yesterday_str']}', end_date='{date_info['yesterday_str']}')
+→ Call: GoogleSearcher(query='Google Alphabet GOOGL stock', start_date='{date_info['yesterday_str']}', end_date='{date_info['yesterday_str']}')
 
 User: '테슬라 4월 실적'
 → Translated query: 'Tesla TSLA earnings revenue'
 → Date range: April 1st to April 30th of current year
-→ Call: GoogleCrawler(query='Tesla TSLA earnings revenue', start_date='04/01/{date_info['current_year']}', end_date='04/30/{date_info['current_year']}')
+→ Call: GoogleSearcher(query='Tesla TSLA earnings revenue', start_date='04/01/{date_info['current_year']}', end_date='04/30/{date_info['current_year']}')
 
 User: '마이크로소프트 주가 뉴스'
 → Translated query: 'Microsoft MSFT stock price'
 → Date range: Default 30 days (no time expression found)
-→ Call: GoogleCrawler(query='Microsoft MSFT stock price', start_date='{date_info['thirty_days_ago']}', end_date='{date_info['today_str']}')
+→ Call: GoogleSearcher(query='Microsoft MSFT stock price', start_date='{date_info['thirty_days_ago']}', end_date='{date_info['today_str']}')
 
 User: '엔비디아 AI 관련 소식'
 → Translated query: 'NVIDIA NVDA AI artificial intelligence'
 → Date range: Default 30 days
-→ Call: GoogleCrawler(query='NVIDIA NVDA AI artificial intelligence', start_date='{date_info['thirty_days_ago']}', end_date='{date_info['today_str']}')
+→ Call: GoogleSearcher(query='NVIDIA NVDA AI artificial intelligence', start_date='{date_info['thirty_days_ago']}', end_date='{date_info['today_str']}')
 
 **STOCK SYMBOL REFERENCE:**
 - Apple: AAPL
@@ -166,7 +166,7 @@ User: '엔비디아 AI 관련 소식'
 - Use standard financial terminology in English
 
 **OUTPUT:**
-Return the exact output from GoogleCrawler without any modifications. 
+Return the exact output from GoogleSearcher without any modifications. 
 DO NOT analyze, summarize, or add your own commentary. 
 The tool already provides perfectly formatted news information with proper error handling."""
 
@@ -185,20 +185,20 @@ The tool already provides perfectly formatted news information with proper error
             response_content = result['messages'][-1].content
             
             # 로깅을 DEBUG 레벨로 변경 (운영시에는 출력되지 않음)
-            self.logger.debug(f"GoogleCrawler result: \n{response_content}")
+            self.logger.debug(f"GoogleSearcher result: \n{response_content}")
             
-            # 크롤링 오류 감지 및 추가 정보 제공
-            if "Crawler 초기화 실패" in response_content or "크롤링 중 오류" in response_content:
-                self.logger.error("Google Crawler error detected")
+            # 검색 오류 감지 및 추가 정보 제공
+            if "Searcher 초기화 실패" in response_content or "검색 중 오류" in response_content:
+                self.logger.error("Google Searcher error detected")
                 enhanced_error = response_content + """
 
-🔧 **크롤링 환경 확인사항:**
+🔧 **검색 환경 확인사항:**
 • 네트워크 연결 상태 확인
 • Google의 요청 제한(Rate Limiting) 확인
 • User-Agent 설정 확인
 • BeautifulSoup 파싱 로직 확인
 
-크롤링이 차단되었을 수 있습니다. 잠시 후 다시 시도해주세요.
+검색이 차단되었을 수 있습니다. 잠시 후 다시 시도해주세요.
 """
                 response_content = enhanced_error
 
@@ -208,7 +208,7 @@ The tool already provides perfectly formatted news information with proper error
                     "messages": [
                         HumanMessage(
                             content=response_content,
-                            name="google_crawler",
+                            name="google_searcher",
                         )
                     ]
                 },
@@ -217,9 +217,9 @@ The tool already provides perfectly formatted news information with proper error
         
         except Exception as e:
             # 에러 로깅만 유지
-            self.logger.error(f"GoogleCrawler execution error: {e}")
+            self.logger.error(f"GoogleSearcher execution error: {e}")
             error_message = f"""
-❌ **GoogleCrawler 실행 오류**
+❌ **GoogleSearcher 실행 오류**
 
 노드 실행 중 예상치 못한 오류가 발생했습니다.
 
@@ -227,7 +227,7 @@ The tool already provides perfectly formatted news information with proper error
 
 **가능한 원인:**
 • 네트워크 연결 문제
-• Google의 크롤링 차단
+• Google의 검색 차단
 • BeautifulSoup 파싱 오류
 • LLM 모델 초기화 실패
 
@@ -238,7 +238,7 @@ The tool already provides perfectly formatted news information with proper error
                     "messages": [
                         HumanMessage(
                             content=error_message,
-                            name="google_crawler",
+                            name="google_searcher",
                         )
                     ]
                 },
@@ -260,7 +260,7 @@ The tool already provides perfectly formatted news information with proper error
             
         except Exception as e:
             error_response = f"""
-❌ **Google News 크롤링 실패**
+❌ **Google News 검색 실패**
 
 쿼리 실행 중 오류가 발생했습니다: {str(e)}
 
@@ -272,5 +272,5 @@ The tool already provides perfectly formatted news information with proper error
 
 다시 시도하거나 관리자에게 문의하세요.
 """
-            self.logger.error(f"GoogleCrawler _invoke error: {e}")
+            self.logger.error(f"GoogleSearcher _invoke error: {e}")
             return RawResponse(answer=error_response)
