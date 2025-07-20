@@ -14,8 +14,8 @@ from tenacity import (
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class GoogleCrawlerWrapper(BaseModel):
-    """Google News crawler with BeautifulSoup"""
+class GoogleSearcherWrapper(BaseModel):
+    """Google News searcher with BeautifulSoup"""
     
     model_config = ConfigDict(
         extra="forbid",
@@ -167,7 +167,7 @@ class GoogleCrawlerWrapper(BaseModel):
             max_results = kwargs.get('max_results', 10)
             
             # 디버그 모드에서만 출력 (환경변수로 제어)
-            if os.getenv('DEBUG_CRAWLER', 'false').lower() == 'true':
+            if os.getenv('DEBUG_SEARCHER', 'false').lower() == 'true':
                 print("🔍 검색 정보:")
                 print(f"  검색 쿼리: '{query}'")
                 print(f"  검색 기간: {start_date} ~ {end_date}")
@@ -180,7 +180,7 @@ class GoogleCrawlerWrapper(BaseModel):
                 return f"❌ '{query}'에 대한 뉴스 검색 결과를 찾을 수 없습니다. (검색 기간: {start_date} ~ {end_date})"
             
             # Format results
-            formatted_results = f"🔍 **Google News 크롤링 결과** ('{query}')\n"
+            formatted_results = f"🔍 **Google News 검색 결과** ('{query}')\n"
             formatted_results += f"📅 **검색 기간**: {start_date} ~ {end_date}\n"
             formatted_results += f"📊 **검색 결과**: 총 {len(results)}건\n\n"
             
