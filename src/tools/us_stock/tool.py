@@ -15,8 +15,8 @@ class USStockInput(BaseModel):
 
     query: str = Field(
         description="Query containing company name/ticker and optionally a specific date. "
-        "Examples: 'Apple', 'AAPL as of 2023-12-31', 'Microsoft in Q2 2023', "
-        "'Tesla financial health in December 2022', 'NVDA 2023년 말 기준'"
+                    "Examples: 'Apple', 'AAPL as of 2023-12-31', 'Microsoft in Q2 2023', "
+                    "'Tesla financial health in December 2022', 'NVDA 2023년 말 기준'"
     )
 
 
@@ -44,7 +44,7 @@ class USFinancialStatementTool(BaseTool):
         self._llm = value
 
     def _create_default_llm(self):
-        """Create default LLM when not available."""
+        """Create default LLM with OpenRouter compatibility."""
         from langchain_openai import ChatOpenAI
         import os
 
@@ -53,10 +53,15 @@ class USFinancialStatementTool(BaseTool):
             temperature=0,
             base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
             openai_api_key=os.getenv("OPENAI_API_KEY"),
+            # OpenRouter 전용 헤더 추가
+            default_headers={
+                "HTTP-Referer": os.getenv("HTTP_REFERER", "http://localhost:8000"),
+                "X-Title": os.getenv("X_TITLE", "Market Analysis Team"),
+            },
         )
 
     def _extract_ticker_and_date(
-        self, query: str
+            self, query: str
     ) -> Tuple[Optional[str], Optional[str]]:
         """Extract both ticker symbol and analysis date from query."""
         if self.llm is None:
@@ -97,8 +102,8 @@ class USFinancialStatementTool(BaseTool):
         """
 
         try:
-            # LLM 호출 시 올바른 형태로 호출
-            response = self.llm.invoke([{"role": "user", "content": prompt}])
+            # LLM 호출 방법 수정 - OpenRouter 호환성 개선
+            response = self.llm.invoke(prompt)  # 수정: 올바른 호출 방식
 
             # response가 다양한 형태일 수 있으므로 안전하게 처리
             if hasattr(response, "content"):
@@ -139,7 +144,7 @@ class USFinancialStatementTool(BaseTool):
             return self._simple_ticker_extraction(query)
 
     def _simple_ticker_extraction(
-        self, query: str
+            self, query: str
     ) -> Tuple[Optional[str], Optional[str]]:
         """Simple fallback ticker extraction without LLM."""
         import re
@@ -187,7 +192,7 @@ class USFinancialStatementTool(BaseTool):
         return None, None
 
     def _filter_data_by_date(
-        self, data: Dict, target_date: str, report_type: str = "annualReports"
+            self, data: Dict, target_date: str, report_type: str = "annualReports"
     ) -> Dict:
         """Filter financial data to get the most recent report before or on target date."""
         if "error" in data or report_type not in data:
@@ -306,9 +311,9 @@ class USFinancialStatementTool(BaseTool):
         return result
 
     def _run(
-        self,
-        query: str,
-        run_manager: Optional[CallbackManagerForToolRun] = None,
+            self,
+            query: str,
+            run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> Union[Dict, str]:
         """Run the tool with date extraction support."""
         try:
@@ -316,7 +321,7 @@ class USFinancialStatementTool(BaseTool):
             ticker, analysis_date = self._extract_ticker_and_date(query)
 
             if not ticker:
-                return "No valid ticker symbol found in the query. Please provide a company name or US stock ticker."
+                return "Please provide a valid company name or ticker symbol for the financial analysis. For example, you can mention \"Apple\" or \"AAPL\"."
 
             print(f"Extracted - Ticker: {ticker}, Date: {analysis_date}")
 
