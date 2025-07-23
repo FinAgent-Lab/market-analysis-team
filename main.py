@@ -16,11 +16,11 @@ from src.graph.nodes import (
     # WeeklyReporterNode,
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
-    USFinancialAnalyzerNode,
+    # USFinancialAnalyzerNode,
     # GoogleSearchAPINode,  # 삭제됨 - google_searcher로 대체
     GoogleSearcherNode,
     CompanyFactsAnalyzerNode,
-    StockInfoNode,
+    # StockInfoNode,
 )
 from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
@@ -92,14 +92,14 @@ def main(
     graph_builder.add_node(ChosunRSSFeederNode())
     graph_builder.add_node(WSJEconomyRSSFeederNode())
     graph_builder.add_node(WSJMarketRSSFeederNode())
-    graph_builder.add_node(StockInfoNode())  # TODO: 종합 처리 기능 적용 시 주석 해제
+    # graph_builder.add_node(StockInfoNode())  # TODO: 종합 처리 기능 적용 시 주석 해제
     graph_builder.add_node(CompanyFactsAnalyzerNode())
 
     # 한투 API 분석 에이전트 노드 주석 처리 (미국 주식 노드로 대체)
     # graph_builder.add_node(HantooFinancialAnalyzerNode())
 
     # 미국 주식 분석 에이전트 노드 추가 (Alpha Vantage API 사용)
-    graph_builder.add_node(USFinancialAnalyzerNode())
+    # graph_builder.add_node(USFinancialAnalyzerNode())  # TODO: 종합 처리 기능 적용 시 주석 해제
 
     # # 주간 리포트 스크래핑 스케쥴러
     # if os.getenv("PRODUCTION", "false").lower() == "true":
