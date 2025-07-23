@@ -184,3 +184,8 @@ backtesting/fix_*.py
 backtesting/add_*.py
 backtesting/update_*.py
 backtesting/fix/*
+
+
+## copilot
+.cursor/
+.taskmaster/
