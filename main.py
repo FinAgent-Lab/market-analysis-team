@@ -16,11 +16,11 @@ from src.graph.nodes import (
     # WeeklyReporterNode,
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
-    USFinancialAnalyzerNode,
+    # USFinancialAnalyzerNode,
     # GoogleSearchAPINode,  # 삭제됨 - google_searcher로 대체
     GoogleSearcherNode,
     CompanyFactsAnalyzerNode,
-    StockInfoNode,
+    # StockInfoNode,
 )
 from src.utils.logger import setup_logger
 from src.graph.builder import SupervisorGraphBuilder
