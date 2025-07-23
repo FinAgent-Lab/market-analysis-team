@@ -77,9 +77,15 @@ jobs:
           # GID=$CURRENT_GID
           EOF
       
+      - name: Clean Docker build cache
+        run: |
+          echo "=== Docker 빌드 캐시 정리 ==="
+          docker builder prune -af
+          
       - name: Build and tag Docker images
         run: |
-          docker compose -f docker-compose.prod.yaml build backend-ma
+          # 캐시 없이 빌드 (--no-cache 옵션)
+          docker compose -f docker-compose.prod.yaml build --no-cache backend-ma
       
       - name: Stop running containers
         run: |
