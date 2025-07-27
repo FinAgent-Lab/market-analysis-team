@@ -16,7 +16,7 @@ from src.graph.nodes import (
     # WeeklyReporterNode,
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
-    # USFinancialAnalyzerNode,
+    USFinancialAnalyzerNode,
     # GoogleSearchAPINode,  # 삭제됨 - google_searcher로 대체
     GoogleSearcherNode,
     CompanyFactsAnalyzerNode,
@@ -99,7 +99,7 @@ def main(
     # graph_builder.add_node(HantooFinancialAnalyzerNode())
 
     # 미국 주식 분석 에이전트 노드 추가 (Alpha Vantage API 사용)
-    # graph_builder.add_node(USFinancialAnalyzerNode())  # TODO: 종합 처리 기능 적용 시 주석 해제
+    graph_builder.add_node(USFinancialAnalyzerNode())  # TODO: 종합 처리 기능 적용 시 주석 해제
 
     # # 주간 리포트 스크래핑 스케쥴러
     # if os.getenv("PRODUCTION", "false").lower() == "true":
