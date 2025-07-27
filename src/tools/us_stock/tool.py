@@ -4,7 +4,9 @@ from typing import Dict, Optional, Type, Union, Tuple
 from datetime import datetime
 from langchain_core.callbacks import CallbackManagerForToolRun
 from langchain_core.tools import BaseTool
+from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
+import re
 
 from src.tools.us_stock.alpha_vantage_client import AlphaVantageAPIWrapper
 from src.tools.us_stock import format_financial_analysis
@@ -41,71 +43,134 @@ class USFinancialStatementTool(BaseTool):
 
     @llm.setter
     def llm(self, value):
-        self._llm = value
+        """LLM 설정 시 깨끗한 LLM으로 재생성"""
+        if value is None:
+            self._llm = None
+            return
+
+        # 바인딩된 LLM이 들어오면 깨끗한 LLM으로 재생성
+        try:
+            # 원본 LLM의 기본 설정만 추출
+            original_model = getattr(value, 'model_name', 'gpt-4o-mini')
+            original_temperature = getattr(value, 'temperature', 0.2)
+            original_base_url = getattr(value, 'openai_api_base', None)
+            original_api_key = getattr(value, 'openai_api_key', None)
+
+            # 바인딩된 kwargs에서 유효한 것만 추출
+            bound_kwargs = getattr(value, 'kwargs', {})
+            clean_model = bound_kwargs.get('model', original_model)
+            clean_temperature = bound_kwargs.get('temperature', original_temperature)
+
+            print(f"Creating clean LLM - model: {clean_model}, temperature: {clean_temperature}")
+
+            # 깨끗한 LLM 생성 (query 등의 잘못된 매개변수 제외)
+            from langchain_openai import ChatOpenAI
+            import os
+
+            clean_llm_params = {
+                "model": clean_model,
+                "temperature": clean_temperature,
+            }
+
+            # API 키 설정
+            if original_api_key:
+                clean_llm_params["openai_api_key"] = original_api_key
+            else:
+                clean_llm_params["openai_api_key"] = os.getenv("OPENAI_API_KEY")
+
+            # base_url 설정
+            if original_base_url:
+                clean_llm_params["base_url"] = original_base_url
+            elif os.getenv("OPENAI_BASE_URL"):
+                clean_llm_params["base_url"] = os.getenv("OPENAI_BASE_URL")
+
+            # OpenRouter 헤더 (필요한 경우)
+            base_url = clean_llm_params.get("base_url", "")
+            if "openrouter" in base_url.lower():
+                clean_llm_params["default_headers"] = {
+                    "HTTP-Referer": os.getenv("HTTP_REFERER", "http://localhost:8000"),
+                    "X-Title": os.getenv("X_TITLE", "Market Analysis Team"),
+                }
+
+            self._llm = ChatOpenAI(**clean_llm_params)
+            print(f"Successfully created clean LLM: {type(self._llm).__name__}")
+
+        except Exception as e:
+            print(f"Error creating clean LLM, falling back to default: {e}")
+            # 실패 시 기본 LLM 생성
+            self._llm = self._create_default_llm()
 
     def _create_default_llm(self):
-        """Create default LLM with OpenRouter compatibility."""
+        """Create default LLM with strict parameter validation."""
         from langchain_openai import ChatOpenAI
         import os
 
-        return ChatOpenAI(
-            model=os.getenv("MAIN_LLM_MODEL", "gpt-4o-mini"),
-            temperature=0,
-            base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
-            openai_api_key=os.getenv("OPENAI_API_KEY"),
-            # OpenRouter 전용 헤더 추가
-            default_headers={
+        clean_params = {
+            "model": os.getenv("MAIN_LLM_MODEL", "gpt-4o-mini"),
+            "temperature": 0.2,
+            "openai_api_key": os.getenv("OPENAI_API_KEY"),
+        }
+
+        base_url = os.getenv("OPENAI_BASE_URL")
+        if base_url and base_url != "https://api.openai.com/v1":
+            clean_params["base_url"] = base_url
+
+        if base_url and "openrouter" in base_url.lower():
+            clean_params["default_headers"] = {
                 "HTTP-Referer": os.getenv("HTTP_REFERER", "http://localhost:8000"),
                 "X-Title": os.getenv("X_TITLE", "Market Analysis Team"),
-            },
-        )
+            }
 
-    def _extract_ticker_and_date(
-            self, query: str
-    ) -> Tuple[Optional[str], Optional[str]]:
-        """Extract both ticker symbol and analysis date from query."""
+        return ChatOpenAI(**clean_params)
+
+    def _extract_ticker_and_date(self, query: str) -> Tuple[Optional[str], Optional[str]]:
+        """Extract both ticker symbol and analysis date from query using LLM only."""
         if self.llm is None:
             print("LLM is not available - creating default LLM")
-            # 기본 LLM 생성
             self._llm = self._create_default_llm()
 
-        prompt = f"""
-        Extract the ticker symbol and analysis date from this financial query:
-        "{query}"
-        
-        Instructions:
-        1. Identify the US stock ticker (1-5 capital letters like AAPL, MSFT, GOOGL)
-        2. Identify any specific date mentioned
-        3. Convert company names to tickers (Apple→AAPL, Microsoft→MSFT, etc.)
-        4. Convert date expressions to YYYY-MM-DD format
-        
-        Date conversion examples:
-        - "Q1 2023" → "2023-03-31" (end of Q1)
-        - "Q2 2023" → "2023-06-30" (end of Q2)  
-        - "Q3 2023" → "2023-09-30" (end of Q3)
-        - "Q4 2023" → "2023-12-31" (end of Q4)
-        - "December 2022" → "2022-12-31"
-        - "2023년 말" → "2023-12-31"
-        - "as of 2023-12-31" → "2023-12-31"
-        
-        Return format: TICKER|DATE or TICKER|CURRENT
-        - Use "CURRENT" if no specific date is mentioned
-        - Use exact YYYY-MM-DD format for dates
-        
-        Examples:
-        - "Apple as of 2023-12-31" → AAPL|2023-12-31
-        - "MSFT in Q2 2023" → MSFT|2023-06-30
-        - "Tesla 2022년 말 기준" → TSLA|2022-12-31
-        - "NVDA" → NVDA|CURRENT
-        
-        Output only the result in TICKER|DATE format:
-        """
+        prompt = f"""Extract the ticker symbol and analysis date from this financial query: "{query}"
+
+Instructions:
+1. Identify the US stock ticker (1-5 capital letters like AAPL, MSFT, GOOGL)
+2. Identify any specific date mentioned
+3. Convert company names to tickers (Apple→AAPL, Microsoft→MSFT, etc.)
+4. Convert date expressions to YYYY-MM-DD format
+
+Date conversion examples:
+- "Q1 2023" → "2023-03-31" (end of Q1)
+- "Q2 2023" → "2023-06-30" (end of Q2)
+- "Q3 2023" → "2023-09-30" (end of Q3)
+- "Q4 2023" → "2023-12-31" (end of Q4)
+- "December 2022" → "2022-12-31"
+- "2023년 말" → "2023-12-31"
+- "as of 2023-12-31" → "2023-12-31"
+
+Return format: TICKER|DATE or TICKER|CURRENT
+- Use "CURRENT" if no specific date is mentioned
+- Use exact YYYY-MM-DD format for dates
+
+Examples:
+- "Apple as of 2023-12-31" → AAPL|2023-12-31
+- "MSFT in Q2 2023" → MSFT|2023-06-30
+- "Tesla 2022년 말 기준" → TSLA|2022-12-31
+- "NVDA" → NVDA|CURRENT
+
+Output only the result in TICKER|DATE format:"""
 
         try:
-            # LLM 호출 방법 수정 - OpenRouter 호환성 개선
-            response = self.llm.invoke(prompt)  # 수정: 올바른 호출 방식
+            # 디버깅 정보 출력
+            print(f"Using LLM: {type(self.llm).__name__}")
+            print(f"LLM model: {getattr(self.llm, 'model_name', 'unknown')}")
 
-            # response가 다양한 형태일 수 있으므로 안전하게 처리
+            # 안전한 LLM 호출
+            message = HumanMessage(content=prompt)
+            print(f"Calling LLM with message type: {type(message)}")
+
+            response = self.llm.invoke([message])
+            print(f"LLM response type: {type(response)}")
+
+            # 응답 내용 추출
             if hasattr(response, "content"):
                 result = response.content.strip().upper()
             elif isinstance(response, str):
@@ -113,83 +178,52 @@ class USFinancialStatementTool(BaseTool):
             else:
                 result = str(response).strip().upper()
 
+            print(f"LLM response: {result}")
+
+            # 결과 파싱 및 검증
             if "|" in result:
                 ticker, date = result.split("|", 1)
 
-                # Validate ticker format
-                import re
-
+                # 티커 형식 검증 (1-5자 대문자)
                 if re.match(r"^[A-Z]{1,5}$", ticker):
-                    # Validate date format if not CURRENT
+                    # 날짜 검증
                     if date == "CURRENT":
+                        print(f"Extracted ticker: {ticker}, date: current")
                         return ticker, None
                     else:
                         try:
-                            # Validate date format
+                            # 날짜 형식 검증
                             datetime.strptime(date, "%Y-%m-%d")
+                            print(f"Extracted ticker: {ticker}, date: {date}")
                             return ticker, date
                         except ValueError:
                             print(f"Invalid date format: {date}")
+                            # 날짜가 잘못되었더라도 티커는 유효하므로 현재 데이터로 처리
                             return ticker, None
                 else:
                     print(f"Invalid ticker format: {ticker}")
-                    return None, None
+                    # LLM이 올바른 형식을 반환하지 못한 경우
+                    raise ValueError(f"LLM failed to extract valid ticker from: {query}")
             else:
                 print(f"Invalid response format: {result}")
-                return None, None
+                raise ValueError(f"LLM response format invalid: {result}")
 
         except Exception as e:
-            print(f"Error extracting ticker and date: {e}")
-            # 에러 발생 시 간단한 패턴 매칭으로 fallback
-            return self._simple_ticker_extraction(query)
+            print(f"Error in LLM ticker extraction: {e}")
+            print(f"Exception type: {type(e)}")
+            import traceback
+            print(f"Full traceback: {traceback.format_exc()}")
+            # 폴백 없이 에러 발생시키기
+            raise ValueError(f"Failed to extract ticker and date using LLM: {str(e)}")
 
-    def _simple_ticker_extraction(
-            self, query: str
-    ) -> Tuple[Optional[str], Optional[str]]:
-        """Simple fallback ticker extraction without LLM."""
-        import re
-
-        # 간단한 패턴 매칭
-        query_upper = query.upper()
-
-        # 티커 패턴 찾기 (1-5자 대문자)
-        ticker_pattern = r"\b([A-Z]{1,5})\b"
-        matches = re.findall(ticker_pattern, query_upper)
-
-        # 회사명 매핑
-        company_mapping = {
-            "APPLE": "AAPL",
-            "MICROSOFT": "MSFT",
-            "GOOGLE": "GOOGL",
-            "AMAZON": "AMZN",
-            "TESLA": "TSLA",
-            "META": "META",
-            "NVIDIA": "NVDA",
-        }
-
-        # 회사명에서 티커 찾기
-        for company, ticker in company_mapping.items():
-            if company in query_upper:
-                return ticker, None
-
-        # 티커 패턴 매치에서 유효한 것 찾기
-        valid_tickers = [
-            "AAPL",
-            "MSFT",
-            "GOOGL",
-            "AMZN",
-            "TSLA",
-            "META",
-            "NVDA",
-            "NFLX",
-            "AMD",
-            "INTC",
-        ]
-        for match in matches:
-            if match in valid_tickers:
-                return match, None
-
-        return None, None
+    def _extract_ticker(self, query: str) -> str:
+        """Extract ticker symbol (for backward compatibility)."""
+        try:
+            ticker, _ = self._extract_ticker_and_date(query)
+            return ticker or "unknown"
+        except Exception as e:
+            print(f"Ticker extraction failed: {e}")
+            return "unknown"
 
     def _filter_data_by_date(
             self, data: Dict, target_date: str, report_type: str = "annualReports"
@@ -317,19 +351,19 @@ class USFinancialStatementTool(BaseTool):
     ) -> Union[Dict, str]:
         """Run the tool with date extraction support."""
         try:
-            # Extract ticker and date from query
+            print(f"Processing query: {query}")
+
+            # Extract ticker and date from query using LLM only
             ticker, analysis_date = self._extract_ticker_and_date(query)
 
             if not ticker:
-                return "Please provide a valid company name or ticker symbol for the financial analysis. For example, you can mention \"Apple\" or \"AAPL\"."
+                raise ValueError("Failed to extract valid ticker symbol from query")
 
-            print(f"Extracted - Ticker: {ticker}, Date: {analysis_date}")
+            print(f"Successfully extracted - Ticker: {ticker}, Date: {analysis_date}")
 
             if analysis_date:
                 # Historical analysis
-                print(
-                    f"Performing historical analysis for {ticker} as of {analysis_date}"
-                )
+                print(f"Performing historical analysis for {ticker} as of {analysis_date}")
                 result = self._get_historical_data(ticker, analysis_date)
 
                 # Format with historical context
@@ -343,8 +377,8 @@ class USFinancialStatementTool(BaseTool):
                 return format_financial_analysis(result)
 
         except Exception as e:
+            error_msg = f"Error analyzing financial statements: {str(e)}"
+            print(error_msg)
             import traceback
-
-            print(f"Error in financial analysis: {repr(e)}")
             print(traceback.format_exc())
-            return f"Error analyzing financial statements: {repr(e)}"
+            return error_msg
