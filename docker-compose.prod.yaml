@@ -33,6 +33,7 @@ services:
       - ./pipelines:/app/pipelines
     environment:
       - APISERVER_HOST=backend-ma:8000
+      - META_SUPERVISOR_HOST=meta-supervisor:8000
       - PIPELINES_DIR=/app/pipelines
       # 필요한 경우 특정 파이프라인 URL 추가 (주석 해제 후 사용)
       # - PIPELINES_URLS=https://github.com/open-webui/pipelines/blob/main/examples/filters/detoxify_filter_pipeline.py
