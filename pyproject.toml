@@ -31,6 +31,8 @@ dependencies = [
     "langchain-naver-community>=0.2.0",
     "beautifulsoup4>=4.13.4",
     "tenacity>=9.1.2",
+    "sec-edgar-api>=1.1.0",
+    "edgartools>=4.6.0",
 ]
 
 [dependency-groups]

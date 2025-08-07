@@ -7,7 +7,6 @@ from src.graph.nodes.rss_feeder import (
     WSJEconomyRSSFeederNode,
     WSJMarketRSSFeederNode,
 )
-# from src.graph.nodes.google_search_api import GoogleSearchAPINode  # 삭제됨 - google_searcher로 대체
 from src.graph.nodes.google_searcher import GoogleSearcherNode
 from src.graph.nodes.hantoo_financial import HantooFinancialAnalyzerNode
 from src.graph.nodes.us_financial import USFinancialAnalyzerNode
@@ -15,6 +14,7 @@ from src.graph.nodes.weekly_reporter import WeeklyReporterNode
 from src.graph.nodes.retrieve_esg import RetrieveESGNode
 from src.graph.nodes.company_facts_analyzer import CompanyFactsAnalyzerNode
 from src.graph.nodes.us_financial_fmg import StockInfoNode
+from src.graph.nodes.edgar_report import EdgarReportNode
 
 __all__ = [
     "Node",
@@ -29,9 +29,8 @@ __all__ = [
     "ChosunRSSFeederNode",
     "WSJEconomyRSSFeederNode",
     "WSJMarketRSSFeederNode",
-    # Google Search (웹 스크래핑 기반)
+    # Google Search
     "GoogleSearcherNode",
-    # "GoogleSearchAPINode",  # 삭제됨 - google_searcher로 대체
     # Financial Analyzers
     "HantooFinancialAnalyzerNode",
     "USFinancialAnalyzerNode",
@@ -41,4 +40,6 @@ __all__ = [
     "WeeklyReporterNode",
     # Stock Info
     "StockInfoNode",
+    # Edgar Report
+    "EdgarReportNode",
 ]

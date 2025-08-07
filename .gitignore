@@ -189,3 +189,6 @@ backtesting/fix/*
 ## copilot
 .cursor/
 .taskmaster/
+
+# Claude Code project file
+CLAUDE.md
